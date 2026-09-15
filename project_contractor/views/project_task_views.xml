@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_task_form2_contractor" model="ir.ui.view">
+        <field name="name">project.task.form.contractor</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_ids'][hasclass('o_task_user_field')]" position="after">
+                <field name="contractor_id"
+                       widget="res_partner_many2one"
+                       context="{'default_is_contractor': True}"
+                       invisible="has_template_ancestor or has_project_template"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="project_task_view_tree_main_base_contractor" model="ir.ui.view">
+        <field name="name">project.task.view.list.main.base.contractor</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.project_task_view_tree_main_base"/>
+        <field name="arch" type="xml">
+            <field name="user_ids" position="after">
+                <field name="contractor_id" optional="hide" widget="res_partner_many2one" options="{'no_open': True}"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_task_kanban_contractor" model="ir.ui.view">
+        <field name="name">project.task.kanban.contractor</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-name='card']//field[@name='partner_id']" position="after">
+                <div t-if="record.contractor_id.raw_value" class="o_task_contractor">
+                    <i class="fa fa-wrench me-1" role="img" title="Contractor" aria-label="Contractor"/>
+                    <field name="contractor_id"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_task_search_form_base_contractor" model="ir.ui.view">
+        <field name="name">project.task.search.base.contractor</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_search_form_base"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="contractor_id" string="Contractor" operator="child_of"/>
+            </field>
+            <filter name="unassigned" position="after">
+                <filter string="With Contractor" name="with_contractor" domain="[('contractor_id', '!=', False)]"/>
+            </filter>
+            <filter name="customer" position="after">
+                <filter string="Contractor" name="groupby_contractor" context="{'group_by': 'contractor_id'}"/>
+            </filter>
+        </field>
+    </record>
+
+</odoo>

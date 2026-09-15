@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="edit_project_contractor" model="ir.ui.view">
+        <field name="name">project.project.form.contractor</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_contractor_tasks" icon="fa-users"
+                        groups="project.group_project_user">
+                    <field name="contractor_count" string="Contractors" widget="statinfo"/>
+                </button>
+            </div>
+        </field>
+    </record>
+
+    <record id="view_project_project_filter_contractor" model="ir.ui.view">
+        <field name="name">project.project.search.contractor</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project_project_filter"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="contractor_ids" string="Contractor" groups="project.group_project_user"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

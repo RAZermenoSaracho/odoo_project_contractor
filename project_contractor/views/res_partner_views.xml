@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_partner_form_contractor" model="ir.ui.view">
+        <field name="name">res.partner.form.project.contractor</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_contractor_tasks" icon="fa-wrench"
+                        groups="project.group_project_user"
+                        invisible="not is_contractor and not contractor_task_count">
+                    <field name="contractor_open_task_count" string="Contractor Work" widget="statinfo"/>
+                </button>
+                <button class="oe_stat_button" type="object" name="action_view_contractor_done_tasks" icon="fa-check-square-o"
+                        groups="project.group_project_user"
+                        invisible="not is_contractor and not contractor_task_count">
+                    <field name="contractor_done_task_count" string="Contractor Done" widget="statinfo"/>
+                </button>
+                <button class="oe_stat_button" type="object" name="action_view_contractor_projects" icon="fa-puzzle-piece"
+                        groups="project.group_project_user"
+                        invisible="not is_contractor and not contractor_task_count">
+                    <field name="contractor_project_count" string="Contractor Projects" widget="statinfo"/>
+                </button>
+            </div>
+            <field name="category_id" position="after">
+                <field name="is_contractor"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_res_partner_filter_contractor" model="ir.ui.view">
+        <field name="name">res.partner.search.project.contractor</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_res_partner_filter"/>
+        <field name="arch" type="xml">
+            <filter name="type_company" position="after">
+                <separator/>
+                <filter string="Contractors" name="contractors"
+                        domain="['|', ('is_contractor', '=', True), ('commercial_partner_id.is_contractor', '=', True)]"/>
+            </filter>
+        </field>
+    </record>
+
+</odoo>

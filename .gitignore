@@ -1,0 +1,79 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Test, coverage and lint caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments and local dependency folders
+# (anchored to the repository root so addon folders such as data/ are never ignored)
+/.venv/
+/venv/
+/env/
+.python-version
+/pydeps/
+
+# Local environment files and secrets
+.env
+.env.*
+*.pem
+*.key
+.odoorc
+/odoo.conf
+*.conf.local
+
+# Odoo local runtime data (never commit databases, filestores or sessions)
+filestore/
+/sessions/
+/data/
+*.dump
+*.sql.gz
+*.zip
+
+# Logs and temporary test/browser artifacts
+*.log
+/logs/
+/tmp/
+*.tmp
+/screenshots/
+*.webm
+
+# Node / assets tooling
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editors and IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code: keep shared repository commands/skills, ignore local and session state
+.claude/settings.local.json
+.claude/**/*.local.*
+.claude/todos/
+.claude/projects/
+.claude/shell-snapshots/
+.claude/statsig/
+CLAUDE.local.md
