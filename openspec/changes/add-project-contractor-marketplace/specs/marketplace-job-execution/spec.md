@@ -61,10 +61,10 @@ A job SHALL become `done` only when the customer confirms completion of a `deliv
 
 #### Scenario: Delivered job never completes by itself
 - **WHEN** a job has been `delivered` for any length of time without customer or manager action
-- **THEN** it remains `delivered`, with no completion time and no review eligibility
+- **THEN** it remains `delivered`, with no completion time
 
 ### Requirement: Cancellation after assignment
-A cancellation after assignment SHALL record the cancellation time, the reason, and the cancelling role (`customer`, `contractor`, or `manager`). The accepted proposal SHALL remain `accepted`, as a historical record of the agreed terms. A cancelled job SHALL NOT be eligible for reviews and SHALL NOT count as completed.
+A cancellation after assignment SHALL record the cancellation time, the reason, and the cancelling role (`customer`, `contractor`, or `manager`). The accepted proposal SHALL remain `accepted`, as a historical record of the agreed terms. A cancelled job SHALL NOT count as completed.
 
 Once a job is `delivered`, neither the customer nor the assigned contractor SHALL be able to cancel it. A delivered job SHALL proceed only by:
 - customer confirmation;
@@ -100,3 +100,10 @@ A job SHALL keep its publication, assignment, latest delivery, completion and ca
 #### Scenario: Completion duration is derivable
 - **WHEN** a job was assigned on day 1 and confirmed done on day 11
 - **THEN** its recorded assignment and completion times allow a completion duration of 10 days to be computed
+
+### Requirement: Work-access extensions can restrict execution
+When the separately specified workspace authorization extension is installed, every contractor execution operation SHALL additionally require current effective work authorization. Historical assignment alone SHALL NOT bypass revoked account approval, suspended profile, revoked work authorization or company restrictions. The standalone core SHALL make no claim to grant Project access.
+
+#### Scenario: Historical assignment after revocation
+- **WHEN** the workspace extension is installed and an assigned contractor whose work authorization was revoked calls mark-delivered
+- **THEN** the operation is refused and the job state is unchanged

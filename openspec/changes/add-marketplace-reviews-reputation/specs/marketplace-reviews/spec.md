@@ -73,7 +73,7 @@ After submission, no actor, including managers and administrators through generi
 - **THEN** the request is rejected and the rating stays 2
 
 ### Requirement: Manager moderation
-A marketplace manager SHALL be able to hide a visible review, with a required reason, and unhide a hidden review. A hidden review SHALL NOT be publicly readable and SHALL NOT count toward reputation. Hiding and unhiding SHALL be recorded with manager, time and reason.
+A marketplace manager SHALL be able to hide a visible review, with a required reason, and unhide a hidden review with a required reason. A hidden review SHALL NOT be publicly readable and SHALL NOT count toward reputation. Hiding and unhiding SHALL be recorded with manager, time and reason.
 
 Moderation SHALL change only the review's visibility. It SHALL NOT alter, redact, replace, or delete the original rating, comment, or submission time. A hidden review SHALL keep its original content, readable by marketplace managers, the reviewer and the reviewed contractor. Unhiding SHALL restore public visibility of exactly the original content. The system SHALL NOT offer any operation that lets a manager rewrite a review.
 
@@ -104,3 +104,10 @@ A visible review of a contractor whose profile is `active` and published SHALL b
 #### Scenario: Contractor sees hidden review of self
 - **WHEN** a contractor reads a hidden review about themselves
 - **THEN** the review is returned with its hidden status
+
+### Requirement: Review operations and audit remain protected
+Review submission SHALL derive the customer and contractor from the authenticated caller and completed job and reject unknown inputs. All review lifecycle/content fields SHALL be protected from generic mutation, including manager writes. Reviews SHALL be undeletable, refuse direct file attachments, keep neutral display names and protected creator/editor/partner references, and expose internal audit notes only to managers. Participant comments SHALL be the immutable review text, not an open chatter channel.
+
+#### Scenario: Generic manager write or delete
+- **WHEN** a manager attempts to rewrite, attach a file to, or delete a submitted review outside its explicit moderation operation
+- **THEN** the operation is rejected and the original review and audit remain intact

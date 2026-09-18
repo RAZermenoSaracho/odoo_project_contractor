@@ -18,10 +18,8 @@ The marketplace SHALL expose these explicit operations. Each operation SHALL be 
 | Request changes; confirm completion | Customer |
 | Cancel job (post-assignment) | Customer, assigned contractor |
 | Cancel job (any non-terminal state); resolve delivered job to done | Marketplace manager |
-| Submit review | Customer of a `done` job |
-| Hide / unhide review | Marketplace manager |
 
-Every state transition in the other marketplace specifications SHALL be reachable only through one of these operations. The v1 inventory SHALL NOT include operations for participant messaging, file attachments, automatic completion, contractor-to-customer reviews, or accepting proposals on a customer's behalf. The internal helpers that operations use (for example closing competing proposals or recording transitions) SHALL NOT be callable over RPC.
+Every state transition in the other marketplace specifications SHALL be reachable only through one of these operations. The core inventory SHALL NOT include participant messaging, file uploads, automatic completion or customer-impersonating acceptance. Separately specified extensions can add private negotiation, document, authorization and review operations without relaxing the core audit-record policy. The internal helpers that operations use (for example closing competing proposals or recording transitions) SHALL NOT be callable over RPC.
 
 #### Scenario: Internal helper not remotely callable
 - **WHEN** a portal user calls, over RPC, the internal helper that closes competing proposals on a job
@@ -32,10 +30,10 @@ Every state transition in the other marketplace specifications SHALL be reachabl
 - **THEN** the proposal is created exactly as it would be through any other client
 
 ### Requirement: The acting party is derived, never supplied
-Every operation SHALL determine the acting customer, contractor, reviewer or manager from the authenticated calling user. No operation SHALL accept an identifier of the acting party, or of an ownership or assignment relation, as input.
+Every operation SHALL determine the acting customer, contractor or manager from the authenticated calling user. No operation SHALL accept an identifier of the acting party, or of an ownership or assignment relation, as input.
 
 #### Scenario: Supplying an acting-party identifier
-- **WHEN** a caller includes a customer, contractor or reviewer identifier in an operation's input
+- **WHEN** a caller includes a customer or contractor identifier in an operation's input
 - **THEN** the operation is rejected and nothing is written
 
 ### Requirement: Strict input allowlists
@@ -45,8 +43,9 @@ Each operation that accepts values SHALL accept only its documented field set:
 - **proposal submit/update**: message, pricing type, amount, estimated duration;
 - **decline**: optional reason;
 - **deliver**: optional note;
-- **request changes, and every cancel, suspend, hide or resolve operation**: a reason;
-- **review submit**: rating and comment.
+- **request changes, suspend, reinstate and resolve**: a required reason;
+- **cancel**: a reason, optional only for customer cancellation before assignment;
+- **set verification**: a boolean verification value.
 
 An input containing any other key SHALL be rejected as a whole, with nothing written. Unknown keys SHALL NOT be silently ignored. Relational inputs SHALL reference only records the caller can read.
 
@@ -80,10 +79,10 @@ The marketplace SHALL be fully usable, with every operation and every guarantee 
 - **THEN** installation succeeds and every operation behaves as specified when called through the ORM or RPC
 
 ### Requirement: Dependency direction
-The marketplace addon SHALL depend only on the contractor foundation addon (`project_contractor`), and through it on Project. It SHALL NOT depend on any of:
+The marketplace addon SHALL declare only the contractor foundation addon (`project_contractor`) as a direct dependency, and through it use Project. It SHALL NOT declare direct dependencies on:
 - a website, portal-page, theme, or presentation addon;
 - any deployment-specific or glue addon;
-- `sale`, `account`, or `rating`;
+- `sale`, `account`, or `rating` (Project already brings `rating` transitively);
 - any hosting, tenant-provisioning, or SSO module.
 
 Presentation addons SHALL depend on the marketplace addon, never the reverse. The foundation addon SHALL NOT depend on the marketplace addon, and no dependency cycle SHALL exist.
@@ -108,10 +107,10 @@ The marketplace addon SHALL be installable and fully functional in any database,
 - **THEN** its outcome depends only on its specified authorization, preconditions and input
 
 ### Requirement: Marketplace jobs are the marketplace's source of truth; integrations are additive
-Marketplace jobs, proposals and reviews SHALL be the sole source of truth for the marketplace lifecycle. The complete lifecycle SHALL work without Sales, Accounting, or hosting modules installed. No record of another business model, including project tasks and their stages, SHALL drive a marketplace state transition. In v1 the marketplace SHALL NOT create or modify project tasks. Future integrations, such as handing an accepted job off to a project task, SHALL be optional, explicit additions that consume marketplace records without replacing or bypassing the domain operations.
+Marketplace jobs and proposals SHALL be the sole source of truth for the marketplace lifecycle. The complete lifecycle SHALL work without Sales, Accounting, or hosting modules installed. No record of another business model, including project tasks and their stages, SHALL drive a marketplace state transition. The standalone core SHALL NOT create or modify project tasks or grant workspace access. The separately specified workspace integration SHALL extend this same acceptance operation with exact customer authorization, current approval and atomic scoped grants; no alternate acceptance path SHALL bypass those checks when that integration is installed. Project tasks SHALL NOT drive commercial state transitions.
 
 #### Scenario: Full lifecycle without Sales
-- **WHEN** the marketplace addon is installed without `sale` or `account` and a job goes from creation to review
+- **WHEN** the marketplace addon is installed without `sale` or `account` and a job goes from creation to completion
 - **THEN** every step succeeds through the domain operations alone
 
 #### Scenario: Task stages do not drive jobs
@@ -139,3 +138,10 @@ Marketplace profiles SHALL expose whether the profile belongs to the caller.
 #### Scenario: Customer display name hidden from non-participants
 - **WHEN** a non-participant portal user reads the customer display name helper on an `open` job
 - **THEN** the value is empty
+
+### Requirement: Extensions preserve acceptance preconditions
+The core SHALL expose one authoritative acceptance path. A separately specified negotiation extension SHALL be able to require a current offer revision, and a workspace extension SHALL be able to require affirmative customer authorization and current account approval in that same transaction. Installing these extensions SHALL NOT leave a legacy public operation that bypasses their preconditions. Standalone core assignment SHALL never be presented as protected Project access.
+
+#### Scenario: Extended acceptance through legacy RPC
+- **WHEN** a caller uses the original acceptance method while negotiation and workspace extensions are installed but omits their required revision or authorization
+- **THEN** the request fails atomically rather than bypassing the extensions

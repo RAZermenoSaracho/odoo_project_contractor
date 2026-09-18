@@ -55,7 +55,7 @@ Reading a profile SHALL NOT disclose the linked contact's identity or contact da
 
 #### Scenario: Directory reader sees only publishable fields
 - **WHEN** another portal user or an anonymous visitor reads a published, active profile
-- **THEN** they can read the publishable fields and derived reputation statistics
+- **THEN** they can read the publishable fields and no private partner data
 - **AND** they cannot read the linked contact reference or the contact's name, email, phone, or address
 
 #### Scenario: Public name defaults but is independent
@@ -67,7 +67,7 @@ Reading a profile SHALL NOT disclose the linked contact's identity or contact da
 A profile SHALL have exactly one status: `draft`, `active`, or `suspended`. The allowed transitions are:
 - `draft` → `active`: by the profile owner. It requires a public name, a headline and at least one skill.
 - `active` → `suspended`: by a marketplace manager only. It requires a reason.
-- `suspended` → `active`: by a marketplace manager only.
+- `suspended` → `active`: by a marketplace manager only, with a required reason.
 
 No other transition SHALL be possible. When a profile is suspended, the system SHALL close all of that contractor's proposals still in `submitted` with close reason `contractor_suspended`. Jobs already assigned to the contractor SHALL NOT change automatically.
 
@@ -100,7 +100,7 @@ A profile SHALL appear in the contractor directory only while it is both `active
 - **THEN** anonymous visitors and other portal users can no longer read it, even though its published flag is unchanged
 
 ### Requirement: Self-service activation and publication without manager approval
-In v1 a profile owner SHALL be able to activate their complete `draft` profile and publish their `active` profile without any manager approval, review, or verification step. Verification SHALL NOT be a precondition for activation, publication, directory listing, or proposal submission. In v1, manager control over profiles SHALL be limited to after-the-fact actions: suspension, reinstatement, unpublishing, and setting or clearing the verification flag. A pre-publication review or approval step is outside v1.
+In the standalone marketplace core a profile owner SHALL be able to activate their complete `draft` profile and publish their `active` profile without any manager approval, review, or verification step. Verification SHALL NOT be a precondition for activation, publication, directory listing, or proposal submission. In v1, manager control over profiles SHALL be limited to after-the-fact actions: suspension, reinstatement, unpublishing, and setting or clearing the verification flag. Internal-user approval is a separate onboarding decision and SHALL NOT be inferred from profile activation, publication or this badge. Public profile publication is not authorization to work in a protected workspace.
 
 #### Scenario: Owner goes live without a manager
 - **WHEN** the owner of a complete `draft` profile activates it and then publishes it, with no manager action at any point
@@ -118,7 +118,7 @@ A profile SHALL carry a verification flag. Only a marketplace manager SHALL be a
 - **THEN** the request is rejected and the verification flag is unchanged
 
 ### Requirement: Owner updates to publishable fields
-The profile owner SHALL be able to update the publishable fields while the profile is `draft` or `active`, but not while it is `suspended`. A profile update SHALL NOT change status, publication, verification, the linked contact, or reputation statistics. Any update that includes one of those fields SHALL be rejected as a whole.
+The profile owner SHALL be able to update the publishable fields while the profile is `draft` or `active`, but not while it is `suspended`. A profile update SHALL NOT change status, publication, verification or the linked contact. Any update that includes one of those fields SHALL be rejected as a whole.
 
 #### Scenario: Update headline
 - **WHEN** the owner of an `active` profile updates its headline
@@ -129,8 +129,15 @@ The profile owner SHALL be able to update the publishable fields while the profi
 - **THEN** the whole request is rejected and neither field changes
 
 ### Requirement: Profile deletion is restricted
-Profile owners SHALL NOT delete their profile; they unpublish it instead. A marketplace manager SHALL be able to delete a profile only if no proposal, job, or review references it.
+Profile owners SHALL NOT delete their profile; they unpublish it instead. A marketplace manager SHALL be able to delete a profile only if no proposal or job references it.
 
 #### Scenario: Referenced profile cannot be deleted
 - **WHEN** a marketplace manager attempts to delete a profile that has at least one proposal
 - **THEN** the deletion is rejected
+
+### Requirement: Profile state is not work authorization
+Activating, publishing or verifying a profile SHALL NOT change the user type or grant any Project or protected-workspace access. The account-approval and customer-authorization extensions SHALL independently govern that access. Suspension SHALL preserve accepted agreement history; where the work-access extension is installed, suspension SHALL disable effective work access without rewriting accepted terms.
+
+#### Scenario: Publish while still portal
+- **WHEN** a portal contractor activates and publishes a complete profile
+- **THEN** they remain a portal user with no protected work access

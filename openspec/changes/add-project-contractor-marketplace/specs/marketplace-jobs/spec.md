@@ -5,7 +5,7 @@ Defines the marketplace job: a customer's public or logged-in listing of work th
 ## ADDED Requirements
 
 ### Requirement: Job creation by an authenticated customer
-Any authenticated user who is not the public user SHALL be able to create a marketplace job. The system SHALL set the job's customer to the calling user's contact and SHALL reject any input that tries to set a different customer. A new job SHALL start in state `draft` and SHALL receive a unique, immutable, human-readable reference.
+Any authenticated user who is not the public user SHALL be able to create a marketplace job without contractor application, approval, verification or profile requirements. The system SHALL set the job's customer to the calling user's contact and SHALL reject any input that tries to set a different customer. A new job SHALL start in state `draft` and SHALL receive a unique, immutable, human-readable reference.
 
 #### Scenario: Portal user creates a draft job
 - **WHEN** an authenticated portal user creates a job with a title
@@ -20,7 +20,7 @@ Any authenticated user who is not the public user SHALL be able to create a mark
 - **THEN** the request is rejected
 
 ### Requirement: Jobs are owned by the individual contact
-In v1 a job SHALL be owned by exactly one individual contact: the contact of the user who created it. Customer rights (reading drafts, editing, publishing, unpublishing, cancelling, deciding on proposals, confirming completion, reviewing) SHALL belong only to that contact. Other contacts SHALL NOT receive customer rights through a shared company, parent contact, or commercial entity. Company-level ownership is outside v1.
+In v1 a job SHALL be owned by exactly one individual contact: the contact of the user who created it. Customer rights (reading drafts, editing, publishing, unpublishing, cancelling, deciding on proposals, confirming completion) SHALL belong only to that contact. Other contacts SHALL NOT receive customer rights through a shared company, parent contact, or commercial entity. Company-level ownership is outside v1.
 
 #### Scenario: Colleague at the same company is not the customer
 - **WHEN** portal user B, whose contact belongs to the same company as the customer's contact, attempts to read the customer's `draft` job or publish it
@@ -175,3 +175,10 @@ The customer or a marketplace manager SHALL be able to cancel a `draft` or `open
 #### Scenario: Cancelled job cannot be reopened
 - **WHEN** anyone attempts to publish or edit a `cancelled` job
 - **THEN** the request is rejected
+
+### Requirement: Listings contain deliberately shared opportunity content only
+A published job SHALL be an opportunity listing, not the protected customer workspace. Private uploads, negotiation history and execution resources SHALL remain in separately authorized records. Publishing or contacting a contractor SHALL NOT grant access to those resources. A separately specified negotiation extension can add an optional initial price and negotiability while retaining currency validation and the pending-proposal edit lock.
+
+#### Scenario: Publish with private contract material
+- **WHEN** a customer publishes the listing for an opportunity that also has private documents in the document extension
+- **THEN** only the deliberately published listing fields become visible and the documents retain their explicit audiences

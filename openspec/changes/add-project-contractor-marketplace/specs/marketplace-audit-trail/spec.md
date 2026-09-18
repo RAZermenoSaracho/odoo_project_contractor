@@ -8,7 +8,6 @@ Makes every business-critical marketplace transition traceable: when it happened
 The system SHALL record these server-generated times when the corresponding transitions happen:
 - **job**: publication, assignment, latest delivery, completion, cancellation;
 - **proposal**: submission, and the decision time when it leaves `submitted`;
-- **review**: submission;
 - **contractor profile**: suspension.
 
 No caller SHALL be able to supply or alter these timestamps.
@@ -26,7 +25,6 @@ The system SHALL record an audit entry, with the acting user and the time, whene
 - **job**: state, visibility, budget, assigned contractor;
 - **proposal**: state, amount, pricing type, estimated duration;
 - **contractor profile**: status, publication, verification;
-- **review**: hidden flag.
 
 Each entry SHALL show the old and new values.
 
@@ -40,7 +38,6 @@ The system SHALL store, and add to the audit trail with actor and time, the reas
 - change requests;
 - manager resolution of a delivered job;
 - profile suspension and reinstatement;
-- review hiding and unhiding;
 - proposal decline, when a reason is given.
 
 #### Scenario: Manager force-completion reason
@@ -55,14 +52,14 @@ Audit entries SHALL name the user who invoked the operation. An operation that n
 - **THEN** the audit entries for the job's and proposals' state changes name that customer as the author
 
 ### Requirement: Audit trail is internal
-Audit entries SHALL be readable by marketplace managers. They SHALL NOT be returned to anonymous visitors or portal users when those users read record messages. Participants learn about transitions from the record's own state, timestamp, and note fields that their access allows.
+Audit entries SHALL be readable by marketplace managers. They SHALL NOT be returned to anonymous visitors or non-manager participants, including restricted internal users when those users read record messages. Participants learn about transitions from the record's own state, timestamp, and note fields that their access allows.
 
 #### Scenario: Contractor reads job messages
 - **WHEN** the assigned contractor reads the messages of their `in_progress` job
 - **THEN** no internal audit entry is returned
 
 ### Requirement: Audit records are durable
-A job, proposal, or review that has left its initial state SHALL NOT be deletable, so its audit trail is preserved. The deletion rules in `marketplace-access-control` apply.
+A job or proposal that has left its initial state SHALL NOT be deletable, so its audit trail is preserved. The deletion rules in `marketplace-access-control` apply.
 
 #### Scenario: Cancelled job with history
 - **WHEN** a marketplace manager attempts to delete a `cancelled` job

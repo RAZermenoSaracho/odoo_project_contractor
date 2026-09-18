@@ -24,11 +24,11 @@ Accepting a proposal is exclusively the customer's business decision. No marketp
 - **THEN** the request fails exactly as if the operation were not permitted for them, and nothing changes
 
 #### Scenario: Marketplace manager attempts acceptance
-- **WHEN** a marketplace manager, who can read the proposal, calls the accept-proposal operation on a `submitted` proposal of an `open` job
+- **WHEN** a marketplace manager who is not the job customer and can read the proposal calls the accept-proposal operation on a `submitted` proposal of an `open` job
 - **THEN** the request is rejected as not permitted, and the job and every proposal are unchanged
 
 #### Scenario: Administrator attempts acceptance
-- **WHEN** a settings administrator calls the accept-proposal operation on a `submitted` proposal of an `open` job
+- **WHEN** a settings administrator who is not the job customer calls the accept-proposal operation on a `submitted` proposal of an `open` job
 - **THEN** the request is rejected as not permitted, and nothing changes
 
 #### Scenario: Suspended contractor
@@ -90,3 +90,10 @@ Once a proposal is accepted, its pricing type, amount, currency and estimated du
 #### Scenario: Agreed terms readable by participants
 - **WHEN** the assigned contractor or the customer reads the job's accepted proposal
 - **THEN** they see the accepted pricing type, amount, currency and estimated duration
+
+### Requirement: Core assignment does not grant protected work access
+Standalone marketplace acceptance SHALL record the commercial assignment only, never create users or grant Project access. When negotiation and workspace extensions are installed, this same acceptance transaction SHALL enforce their revision, explicit authorization and eligibility requirements before any assignment persists.
+
+#### Scenario: Standalone core acceptance
+- **WHEN** a customer accepts an eligible proposal with only the marketplace core installed
+- **THEN** the commercial assignment is recorded but no Project task, collaborator, internal account or work grant is created

@@ -8,7 +8,44 @@
 | **Addon version** | 19.0.1.0.0 |
 | **License** | [LGPL-3](LICENSE) |
 
-`project_contractor` extends standard Odoo **Contacts** and **Project** so
+`project_contractor` is intended to provide a reusable, database-scoped contractor
+workflow for **Odoo 19 Community**. External contractors should work directly
+with customers and, after administrator approval, may become internal Odoo users
+with access limited to explicitly authorized contracts, projects and resources.
+They must not inherit general visibility into unrelated database records.
+
+**Current implementation:** the addon is the contractor foundation described
+below. The complete workflow is planned, not yet implemented.
+
+## Intended end-to-end workflow
+
+1. A portal user registers or applies to become a contractor.
+2. An administrator reviews the application and may approve the existing person
+   as a narrowly restricted internal user. Approval alone grants no contract access.
+3. Any normal authenticated portal customer can create or upload a contract
+   opportunity without contractor verification, browse the contractor directory,
+   and approach one or more contractors.
+4. An opportunity may include an initial proposed price. The customer and each
+   contractor can discuss and negotiate terms through frontend/portal messaging.
+5. Contact or negotiation grants access only to the deliberately shared brief
+   and that private conversation, never to the customer's protected workspace.
+6. The customer accepts the agreed terms/price and explicitly authorizes the
+   contractor to work on that specific contract. Only then does its protected
+   workspace become accessible and appear in the contractor's active contracts.
+7. Backend and portal pages, navigation, revocation and verification must support
+   this workflow cleanly on an appropriate Odoo 19 Community database, without
+   deployment-specific identities, database names, hosting or SSO assumptions.
+
+Authorization boundaries, record rules, portal/internal-user transitions,
+multi-user visibility and prevention of unrelated access are core product
+requirements. Contractor classification, directory publication, administrator
+approval, negotiation and customer work authorization are distinct decisions.
+The data model and UX should reuse native Odoo concepts with minimal extensions;
+the reviewed OpenSpec changes define the implementation, not this overview.
+
+## Implemented foundation
+
+The current addon extends standard Odoo **Contacts** and **Project** so
 external contractors can be recorded on contacts, assigned to tasks, and
 followed across projects, **without being Odoo users**.
 
@@ -21,7 +58,7 @@ followed across projects, **without being Odoo users**.
 In standard Odoo, a task links to two kinds of people: its internal
 **assignees** (`user_ids`, which must be internal users) and its **customer**
 (`partner_id`). There is no native place to record an outside freelancer or
-subcontracting company that does the work, short of creating a paid user or
+subcontracting company that does the work, short of creating an internal account or
 misusing the customer field or tags. This addon adds that missing
 relationship with a small, upstream-safe extension.
 
@@ -79,7 +116,7 @@ Setting or changing one never changes the other, nor the task's customer.
 - All of these values are computed from tasks and never stored or edited by
   hand.
 
-## Security and privacy
+## Current foundation security and privacy
 
 - The addon adds **no new security groups, access rights or record rules**.
   Contractor data follows Odoo's standard Project and Contacts access.
@@ -156,11 +193,19 @@ the history of implemented changes in `openspec/changes/archive/`.
 
 ## Roadmap
 
-An optional, separate addon, `project_contractor_marketplace`, is **planned but
-not implemented**. It would add public contractor profiles, job listings,
-proposals, reviews and reputation on top of this foundation. Its plan is in
-[`openspec/changes/add-project-contractor-marketplace`](openspec/changes/add-project-contractor-marketplace).
-`project_contractor` does not depend on it and is fully usable on its own.
+The complete workflow is **planned but not implemented**. The existing
+[`marketplace domain plan`](openspec/changes/add-project-contractor-marketplace)
+and the other changes under [`openspec/changes/`](openspec/changes/) divide the
+remaining work into independently verifiable capabilities. See the
+[`repository audit and implementation order`](openspec/AUDIT.md).
+The proposed packaging keeps this foundation usable alone and adds reusable
+sibling addons for the workflow; installing the foundation alone does not
+provide the complete product. Reviews and reputation are optional follow-on work.
+
+Development follows a strict plan-before-code process: explore, prepare OpenSpec
+proposal/specs/design/tasks, and stop for review. Implementation requires an
+explicit subsequent instruction to apply a named change. Archiving requires
+completed implementation, verification, and separate explicit approval.
 
 ## License
 
