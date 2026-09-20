@@ -1,48 +1,54 @@
 # contractor-access-control Specification
 
 ## Purpose
-Keeps contractor information inside Odoo's existing Contacts and Project access model. Being a contractor never grants access, creates accounts, or exposes data to external users.
+
+Defines the restricted internal Contractor role and its least-privilege access to
+the Contractor workflow without creating a parallel authorization system.
 
 ## Requirements
 
-### Requirement: Contractor data follows existing access
-Reading or changing a task's contractor SHALL require the same access as reading or changing the task. Reading or changing a contact's contractor classification SHALL require the same access as reading or changing the contact. The addon SHALL NOT introduce security groups, access-right entries, or record rules that widen or narrow access to contacts, projects, or tasks.
+### Requirement: Automatic identity-preserving activation
+An authenticated portal user SHALL be able to explicitly activate Contractor
+access for their existing user and partner identity. Activation SHALL require no
+administrator approval and SHALL NOT create a second user or contact.
 
-#### Scenario: Read-only project user
-- **WHEN** a user who can read but not edit task T tries to change T's contractor
-- **THEN** the change is rejected by the task's existing access rights
+#### Scenario: Portal user becomes a Contractor
+- **WHEN** an authenticated portal user selects "Become a Contractor"
+- **THEN** that same user becomes an internal Contractor and retains the same partner
 
-#### Scenario: No new security objects
-- **WHEN** the addon's security definitions are inspected after installation
-- **THEN** no group, access-right entry, or record rule has been added by the addon
+### Requirement: Contractor backend boundary
+A Contractor SHALL receive only the normal internal access needed for Projects,
+Tasks, their own profile, and required communication. The addon SHALL NOT grant
+unrelated business-application access merely because the user is a Contractor.
 
-### Requirement: Being a contractor grants nothing
-Marking a contact as a contractor, or assigning it to a task, SHALL NOT:
-- create a user or portal account;
-- give any user access to a project or task;
-- add the contact as a follower or collaborator;
-- send the contact any message.
+#### Scenario: Unrelated records remain inaccessible
+- **WHEN** a Contractor attempts to open an unrelated internal application record
+- **THEN** normal Odoo access control denies it unless another authorized group grants it
 
-A contractor contact that already has a portal account SHALL gain no access to a task by being its contractor.
+### Requirement: Contractor profile access
+A Contractor SHALL read and write their own partner record as needed by the
+workflow and SHALL NOT create, read, write, or delete arbitrary contacts through
+the Contractor role.
 
-#### Scenario: Portal user assigned as contractor
-- **WHEN** a contact that has a portal account is set as contractor of a task in a project not shared with them
-- **THEN** that portal user still cannot read the task or the project
+#### Scenario: Foreign contact is denied
+- **WHEN** a Contractor attempts to read or edit another partner record
+- **THEN** access is denied
 
-### Requirement: Contractor fields are not exposed to portal users
-Portal users, including collaborators of shared projects, SHALL NOT be able to read a task's contractor or any contractor work-history value, whether through portal pages, project sharing, or RPC.
+### Requirement: Project and task access follows lifecycle authority
+Contractor access to a Project and its Tasks SHALL follow the current Contractor
+relationship to that Project: Discoverable, Participant/Candidate, or Assigned
+Contractor. A Contractor SHALL never obtain access to a project assigned solely
+to another Contractor.
 
-#### Scenario: Project-sharing collaborator reads a task
-- **WHEN** a portal collaborator of a shared project reads a task whose contractor is "Jane Doe"
-- **THEN** the contractor value is not returned to them
+#### Scenario: Other contractor project is hidden
+- **WHEN** a Contractor searches Projects assigned only to another Contractor
+- **THEN** those Projects are absent from the result
 
-#### Scenario: Portal RPC read of the contractor field
-- **WHEN** a portal user explicitly requests the contractor field of a task they can otherwise read
-- **THEN** the request is refused or returns no contractor value
+### Requirement: Contractors cannot alter the commercial relationship
+A Contractor SHALL NOT assign or reassign the primary Contractor, change the
+customer, or close a Project/Contract. Those operations belong to the customer
+or appropriately authorized internal staff.
 
-### Requirement: Multi-company consistency
-Contractor assignments and work history SHALL respect the task's company and the user's allowed companies, as the task's customer field does. A user SHALL NOT see contractor work from companies they are not allowed to access.
-
-#### Scenario: Other-company work not counted
-- **WHEN** "Jane Doe" is shared across companies, is contractor of a task in company A and of a task in company B, and user U is allowed only company A
-- **THEN** U sees one contractor task for Jane
+#### Scenario: Contractor attempts reassignment
+- **WHEN** an Assigned Contractor attempts to change the Project's customer or primary Contractor
+- **THEN** the operation is denied

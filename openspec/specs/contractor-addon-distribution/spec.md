@@ -1,66 +1,45 @@
 # contractor-addon-distribution Specification
 
 ## Purpose
-Makes the contractor foundation addon installable and useful on any compatible Odoo 19 Community installation with Project, as a clean open-source module with no deployment-specific assumptions.
+
+Makes `project_contractor` a portable Odoo 19 Community addon that supplies the
+generic Contractor workflow without deployment-specific branding or companion addons.
 
 ## Requirements
 
-### Requirement: Minimal dependencies
-The addon SHALL declare exactly one dependency: `project`. It SHALL NOT depend on website, portal-page, contacts-app, sales, HR, accounting, or any non-upstream module.
+### Requirement: Generic single-addon delivery
+The complete generic Contractor workflow SHALL live in `project_contractor`.
+The addon SHALL use its declared upstream Odoo dependencies and SHALL NOT
+require `razs_web`, RAZS-specific records, branding, or another Contractor
+access addon.
 
-#### Scenario: Declared dependencies
-- **WHEN** the addon's manifest is inspected
-- **THEN** its dependencies are exactly `project`
+#### Scenario: Clean generic installation
+- **WHEN** `project_contractor` is installed on a normal compatible Odoo 19 Community database
+- **THEN** its generic Contractor data, security, and portal workflow are available without RAZS-specific modules
 
-#### Scenario: Install where only Project is present
-- **WHEN** the addon is installed in a database that has only `project` and its own dependencies installed
-- **THEN** installation succeeds and every contractor capability works
+### Requirement: Required native dependencies
+The addon SHALL declare the upstream dependencies needed for its Project,
+authenticated portal, and website workflow. It SHALL NOT depend on Sales, HR,
+Accounting, payment, or a marketplace addon merely to provide the core workflow.
 
-### Requirement: No deployment or data assumptions
-The addon SHALL work regardless of database name, hostname, hosting setup, or installed website. It SHALL NOT refer to specific projects, stages, users, companies, or other records by identifier, except records the addon itself defines or standard upstream reference data. It SHALL NOT require portal users or website pages.
+#### Scenario: No commercial subsystem prerequisite
+- **WHEN** the manifest dependencies are inspected
+- **THEN** they do not require invoicing, payment, escrow, or a marketplace subsystem
 
-#### Scenario: Arbitrary database
-- **WHEN** the addon is installed in a new database with an arbitrary name, its own projects, and its own task stages
-- **THEN** installation succeeds and contractors can be classified, assigned, and reviewed in work history
+### Requirement: Extensible generic presentation
+The addon SHALL provide intentionally minimal functional backend and website
+views using standard Odoo mechanisms. A separate website addon MAY inherit and
+brand those views without changing Contractor domain or access behavior.
 
-### Requirement: Upstream-safe extension
-The addon SHALL add its fields and interface elements by extending the standard Contacts and Project models and views, without replacing upstream views or changing the behavior of existing upstream fields. When no contact is marked as contractor and no task has a contractor, Contacts and Project SHALL behave as without the addon.
+#### Scenario: Branded addon can inherit
+- **WHEN** a separate website addon customizes a Contractor template
+- **THEN** the Contractor workflow remains supplied by `project_contractor`
 
-#### Scenario: Existing projects unaffected
-- **WHEN** the addon is installed in a database with existing projects and tasks
-- **THEN** no contact is a contractor, no task has a contractor, and existing assignees, customers, stages and states are unchanged
+### Requirement: Upstream-safe data extension
+The addon SHALL extend standard Contacts, Projects, Tasks, and native
+communication mechanisms without replacing their unrelated behavior. Existing
+projects remain ordinary projects until a Contractor workflow relationship is set.
 
-### Requirement: Clean uninstallation
-Uninstalling the addon SHALL remove its contractor classification, task contractor values, and interface additions. It SHALL leave contacts, projects, and tasks otherwise intact.
-
-#### Scenario: Uninstall after use
-- **WHEN** the addon is uninstalled from a database where contractors were assigned to tasks
-- **THEN** all contacts, projects, and tasks still exist with their standard data unchanged
-
-### Requirement: Contractor terminology and open-source documentation
-User-visible labels SHALL use "Contractor" for the external party performing work, and SHALL NOT present the feature as legal contracts, subscriptions, or employment contracts. The addon SHALL ship a README that explains:
-- its purpose;
-- the difference between contractors and contracts;
-- its features;
-- its dependency;
-- configuration (none required) and usage;
-- known limitations;
-- its license;
-- its relationship to the optional marketplace addon.
-
-The addon and its documentation SHALL contain no deployment- or organization-specific branding.
-
-#### Scenario: Labels say contractor
-- **WHEN** the addon's user-visible field labels, filters and buttons are reviewed
-- **THEN** each refers to contractors, and none refers to contracts
-
-#### Scenario: README completeness
-- **WHEN** the README is reviewed
-- **THEN** it covers each listed topic and names no specific organization's deployment
-
-### Requirement: Consistent open-source license
-The license declared in the addon's manifest SHALL be the approved open-source license, and it SHALL match the license file shipped at the repository root.
-
-#### Scenario: License consistency
-- **WHEN** the manifest license and the repository license file are compared
-- **THEN** they name the same approved open-source license
+#### Scenario: Existing project remains unchanged
+- **WHEN** the addon is installed with existing Projects
+- **THEN** their standard owner, customer, tasks, and visibility are not reassigned by installation
