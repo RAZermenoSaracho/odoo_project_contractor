@@ -1,0 +1,4 @@
+<odoo>
+ <template id="contractor_portal_home"><t t-call="website.layout"><main class="container py-5"><h1>Contractor</h1><t t-if="user.is_contractor_user"><a href="/my/contractor/contracts">My contracts</a></t><t t-else=""><form action="/my/contractor/activate" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/><button type="submit" class="btn btn-primary">Become a Contractor</button></form></t></main></t></template>
+ <template id="contractor_portal_contracts"><t t-call="website.layout"><main class="container py-5"><h1>My contracts</h1><ul><t t-foreach="projects" t-as="project"><li t-esc="project.name"/></t></ul></main></t></template>
+</odoo>

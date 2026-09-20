@@ -52,3 +52,34 @@ class ProjectTask(models.Model):
                     contractor=task.contractor_id.display_name, contractor_company=contractor_company.display_name,
                     task=task.display_name, task_company=task.company_id.display_name,
                 ))
+
+    def _contractor_invalidate_derived_values(self, contractors=None, projects=None):
+        contractors = (contractors or self.env['res.partner']).with_context(active_test=False)
+        if contractors:
+            contractors._contractor_invalidate_work_history()
+        projects = projects or self.env['project.project']
+        if projects:
+            projects.invalidate_recordset(['contractor_ids', 'contractor_count'])
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        tasks = super().create(vals_list)
+        tasks._contractor_invalidate_derived_values(tasks.mapped('contractor_id'), tasks.mapped('project_id'))
+        return tasks
+
+    def write(self, vals):
+        contractors = self.mapped('contractor_id')
+        projects = self.mapped('project_id')
+        result = super().write(vals)
+        if {'contractor_id', 'project_id', 'active', 'is_template', 'has_template_ancestor', 'has_project_template', 'state'} & vals.keys():
+            self._contractor_invalidate_derived_values(
+                contractors | self.mapped('contractor_id'), projects | self.mapped('project_id'),
+            )
+        return result
+
+    def unlink(self):
+        contractors = self.mapped('contractor_id')
+        projects = self.mapped('project_id')
+        result = super().unlink()
+        self._contractor_invalidate_derived_values(contractors, projects)
+        return result

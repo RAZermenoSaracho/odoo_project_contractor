@@ -20,6 +20,7 @@ class TestWorkHistory(ProjectContractorCommon):
         acme = self.acme.with_user(self.project_user)
         bob = self.bob.with_user(self.project_user)
         self.assertEqual(acme.contractor_task_count, 2)
+        self.assertEqual(acme.contractor_task_ids, task_3 | task_4)
         self.assertEqual(bob.contractor_task_count, 1)
         self.assertEqual(bob.contractor_task_ids, task_4)
         Task = self.env['project.task'].with_user(self.project_user)
@@ -48,7 +49,6 @@ class TestWorkHistory(ProjectContractorCommon):
     def test_reopened_task_returns_to_current_work(self):
         tasks = self._create_tasks_in_states()
         tasks[2].state = '01_in_progress'
-        self.env.invalidate_all()
         jane = self.jane.with_user(self.project_user)
         self.assertEqual(jane.contractor_open_task_count, 3)
         self.assertEqual(jane.contractor_done_task_count, 1)
@@ -69,7 +69,6 @@ class TestWorkHistory(ProjectContractorCommon):
         self.assertEqual(self.jane.with_user(self.project_user).contractor_done_task_count, 1)
         self.assertEqual(self.dan.with_user(self.project_user).contractor_done_task_count, 0)
         task.contractor_id = self.dan
-        self.env.invalidate_all()
         self.assertEqual(self.jane.with_user(self.project_user).contractor_done_task_count, 0)
         self.assertEqual(self.dan.with_user(self.project_user).contractor_done_task_count, 1)
 

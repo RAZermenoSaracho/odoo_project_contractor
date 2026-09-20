@@ -1,23 +1,20 @@
 ## Why
 
-Ordinary internal users inherit broad database access; the current foundation intentionally does not narrow it. A verified restriction layer must exist before any contractor is promoted from portal to internal.
+The previous access plan attempted database-wide isolation through a custom
+policy inventory, grant ledger, RPC interception and route allowlists. That is
+far beyond the product requirement and difficult to maintain.
 
 ## What Changes
 
-- Add a separately installable, default-deny restricted internal role with explicit per-record grants and a reviewed model/operation access inventory.
-- Prevent implied groups, company membership, followers, generic RPC and attachments from widening contractor access; fail closed for unsupported installed modules.
-- Preserve ordinary employee behavior and the standalone foundation. This layer exposes no self-service promotion or customer authorization endpoint.
+- Extend `project_contractor` with one `Contractor` internal group and a
+  portal self-service activation action for the user's existing identity.
+- Use standard ACLs and global record rules to limit Contractor project/task
+  visibility to their assignments and projects with no assignment.
+- Limit Contractor contact access to their own partner record and provide small
+  website pages for activation and the visible contract list.
 
-## Capabilities
+## Out of Scope
 
-### New Capabilities
-- `contractor-internal-isolation`: Database-wide boundary for restricted internal accounts, effective grants, revocation and compatible installations.
-
-### Modified Capabilities
-None.
-
-## Impact
-
-New sibling addon `project_contractor_access`, depending on `project_contractor`, under LGPL-3 as a proposed packaging choice. Touches user/group transitions, ACL/rule integration and record access in a later apply only. Independent of marketplace. Onboarding depends on its verified boundary.
-
-Planning only. These decisions are proposed for review; implementation and archiving require separate explicit approval.
+Marketplace listings, approval workflows, negotiation, document sharing,
+reviews, grants, module inventories and database-wide interception are not
+part of this change.

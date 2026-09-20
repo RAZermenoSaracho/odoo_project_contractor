@@ -18,7 +18,6 @@ class TestProjectParticipation(ProjectContractorCommon):
         task = self.create_task('Only Jane task', self.project_p, contractor_id=self.jane.id)
         self.assertEqual(self.project_p.with_user(self.project_user).contractor_ids, self.jane)
         task.contractor_id = False
-        self.env.invalidate_all()
         self.assertFalse(self.project_p.with_user(self.project_user).contractor_ids)
 
     def test_archived_and_template_tasks_are_excluded(self):
@@ -51,6 +50,13 @@ class TestProjectParticipation(ProjectContractorCommon):
         self.assertNotIn('search_default_open_tasks', action['context'])
         listed = self.env['project.task'].with_user(self.project_user).search(action['domain'])
         self.assertEqual(listed, open_task | done_task)
+
+    def test_participation_refreshes_without_manual_cache_invalidation(self):
+        task = self.create_task('Only Jane task', self.project_p, contractor_id=self.jane.id)
+        project = self.project_p.with_user(self.project_user)
+        self.assertEqual(project.contractor_ids, self.jane)
+        task.contractor_id = self.acme
+        self.assertEqual(project.contractor_ids, self.acme)
 
     def test_search_projects_by_contractor(self):
         self.create_task('Acme in P', self.project_p, contractor_id=self.acme.id)

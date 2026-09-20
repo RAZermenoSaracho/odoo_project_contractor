@@ -7,6 +7,16 @@ from odoo.fields import Domain
 class ProjectProject(models.Model):
     _inherit = 'project.project'
 
+    contractor_user_ids = fields.Many2many('res.users', compute='_compute_contractor_assignment', store=True)
+    has_contractor_assignment = fields.Boolean(compute='_compute_contractor_assignment', store=True)
+
+    @api.depends('task_ids.user_ids', 'task_ids.contractor_id', 'task_ids.contractor_id.user_ids')
+    def _compute_contractor_assignment(self):
+        for project in self:
+            users = project.task_ids.user_ids | project.task_ids.contractor_id.user_ids
+            project.contractor_user_ids = users
+            project.has_contractor_assignment = bool(users)
+
     contractor_ids = fields.Many2many(
         'res.partner', string="Contractors", compute='_compute_contractor_ids', search='_search_contractor_ids',
         groups='project.group_project_user', export_string_translation=False,
@@ -54,7 +64,11 @@ class ProjectProject(models.Model):
         context['search_default_groupby_contractor'] = 1
         action.update({
             'display_name': _("%(project_name)s's Contractor Work", project_name=self.name),
-            'domain': [('project_id', '=', self.id), ('contractor_id', '!=', False), ('has_template_ancestor', '=', False)],
+            'domain': list(
+                Domain('project_id', '=', self.id)
+                & Domain('contractor_id', '!=', False)
+                & self.env['project.task']._get_contractor_work_domain()
+            ),
             'context': context,
         })
         return action

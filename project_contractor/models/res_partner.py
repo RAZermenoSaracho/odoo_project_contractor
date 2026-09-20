@@ -9,6 +9,12 @@ from odoo.addons.project.models.project_task import CLOSED_STATES
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
+    def unlink(self):
+        if self.env.user.is_contractor_user:
+            from odoo.exceptions import AccessError
+            raise AccessError(_("Contractors cannot delete contacts."))
+        return super().unlink()
+
     is_contractor = fields.Boolean(
         string="Contractor",
         index=True,
@@ -18,7 +24,7 @@ class ResPartner(models.Model):
              "Contacts belonging to a contractor company can also be set as task contractors.",
     )
     contractor_task_ids = fields.One2many(
-        'project.task', 'contractor_id', string="Contractor Tasks",
+        'project.task', 'contractor_id', string="Contractor Tasks", compute='_compute_contractor_work_history',
         groups='project.group_project_user', export_string_translation=False)
     contractor_task_count = fields.Integer(
         string="Contractor Tasks Count", compute='_compute_contractor_work_history',
@@ -48,7 +54,10 @@ class ResPartner(models.Model):
 
     @api.depends_context('uid', 'allowed_company_ids')
     def _compute_contractor_work_history(self):
-        stats = {partner.id: {'all': 0, 'open': 0, 'done': 0, 'projects': set()} for partner in self}
+        stats = {
+            partner.id: {'all': 0, 'open': 0, 'done': 0, 'projects': set()}
+            for partner in self
+        }
         real_partners = self.filtered('id')._origin
         if real_partners:
             work_partners = real_partners._get_contractor_work_partners()
@@ -77,9 +86,32 @@ class ResPartner(models.Model):
         for partner in self:
             partner_stats = stats.get(partner._origin.id) or stats[partner.id]
             partner.contractor_task_count = partner_stats['all']
+            partner.contractor_task_ids = self.env['project.task'].search(partner._get_contractor_work_task_domain())
             partner.contractor_open_task_count = partner_stats['open']
             partner.contractor_done_task_count = partner_stats['done']
             partner.contractor_project_count = len(partner_stats['projects'])
+
+    def _contractor_invalidate_work_history(self):
+        """Invalidate derived history after a partner hierarchy change.
+
+        Task changes are handled by ``project.task``.  A parent change has no
+        native field dependency from the task inverse relation, so invalidate
+        the affected contacts and both parent chains explicitly.
+        """
+        partners = self.with_context(active_test=False)
+        ancestors = partners.search([('id', 'parent_of', partners.ids)])
+        (partners | ancestors).invalidate_recordset([
+            'contractor_task_ids', 'contractor_task_count',
+            'contractor_open_task_count', 'contractor_done_task_count',
+            'contractor_project_count',
+        ])
+
+    def write(self, vals):
+        old_parents = self.with_context(active_test=False).mapped('parent_id') if 'parent_id' in vals else self.browse()
+        result = super().write(vals)
+        if 'parent_id' in vals:
+            (self | old_parents)._contractor_invalidate_work_history()
+        return result
 
     def _get_contractor_work_task_domain(self):
         self.ensure_one()

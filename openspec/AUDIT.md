@@ -119,8 +119,7 @@ Proposed package graph (names are planning decisions, not existing addons):
 ```mermaid
 flowchart TD
     foundation[project_contractor] --> project[Odoo Project]
-    access[project_contractor_access] --> foundation
-    onboarding[project_contractor_onboarding] --> access
+    access[Contractor access in project_contractor] --> foundation
     marketplace[project_contractor_marketplace] --> foundation
     negotiation[project_contractor_negotiation] --> marketplace
     workflow[project_contractor_workflow] --> onboarding
