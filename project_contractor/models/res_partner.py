@@ -69,6 +69,9 @@ class ResPartner(models.Model):
                 groupby=['contractor_id', 'state', 'project_id'],
                 aggregates=['__count'],
             )
+            readable_project_ids = set(self.env['project.project'].search(
+                Domain('id', 'in', [project.id for _, _, project, _ in task_groups if project])
+            ).ids)
             target_ids = set(real_partners.ids)
             for contractor, state, project, count in task_groups:
                 partner_id = contractor.id
@@ -80,7 +83,7 @@ class ResPartner(models.Model):
                             partner_stats['done'] += count
                         elif state not in CLOSED_STATES:
                             partner_stats['open'] += count
-                        if project:
+                        if project and project.id in readable_project_ids:
                             partner_stats['projects'].add(project.id)
                     partner_id = parent_by_id.get(partner_id)
         for partner in self:
@@ -153,10 +156,13 @@ class ResPartner(models.Model):
             self._get_contractor_work_task_domain() & Domain('project_id', '!=', False),
             groupby=['project_id'],
         )
+        projects = self.env['project.project'].search(
+            Domain('id', 'in', [project.id for [project] in project_groups])
+        )
         action = self.env['ir.actions.act_window']._for_xml_id('project.open_view_project_all')
         action.update({
             'display_name': _("%(partner_name)s's Contractor Projects", partner_name=self.name),
-            'domain': [('id', 'in', [project.id for [project] in project_groups])],
+            'domain': [('id', 'in', projects.ids)],
             'context': {},
         })
         return action

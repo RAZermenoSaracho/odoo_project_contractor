@@ -20,6 +20,10 @@ A project's participating contractors SHALL be the distinct contractors of its t
 - **WHEN** the only task of P with contractor "Bob" is archived, and a task template of P has contractor "Dan"
 - **THEN** neither "Bob" nor "Dan" is a participating contractor of P
 
+#### Scenario: Cached participation refresh
+- **WHEN** participation is read, the last task is reassigned or archived, and participation is read again in the same transaction without manual cache invalidation
+- **THEN** the contractor set and count immediately reflect the changed eligible tasks
+
 ### Requirement: No project-level contractor designations in v1
 Projects SHALL NOT store their own contractor designations (for example a primary contractor or a list of eligible contractors) in v1. Contractor participation SHALL have exactly one source of truth: task contractor assignments.
 
@@ -33,6 +37,10 @@ A project SHALL display the number of its participating contractors to users who
 #### Scenario: Open contracted work of a project
 - **WHEN** a project user opens the contractors entry of project P, which has two participating contractors
 - **THEN** the count shows 2, and P's tasks that have a contractor are listed grouped by contractor
+
+#### Scenario: Navigation agrees with excluded tasks
+- **WHEN** a project contains ordinary work, task templates and project-template tasks with contractors
+- **THEN** the contractor navigation and count use exactly the same exclusions, including when archived-record filtering is disabled
 
 ### Requirement: Search projects by contractor
 Project searches SHALL let users find the projects in which a given contractor participates.
