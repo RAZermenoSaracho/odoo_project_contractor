@@ -24,6 +24,14 @@ class TestPortalWorkflow(ProjectContractorCommon):
         user.with_user(user).action_become_contractor()
         return user
 
+    def test_portal_home_routes_survive_contractor_controller(self):
+        routes = {rule.rule for rule in self.env['ir.http'].routing_map().iter_rules()}
+        for route in (
+            '/my', '/my/home', '/my/contractor', '/my/contractor/contracts',
+            '/my/contractor/proposals', '/my/contractor/projects',
+        ):
+            self.assertIn(route, routes)
+
     def test_customer_commercial_contract_and_award_journey(self):
         contract = self.env['contract.contract'].with_user(self.customer).create({
             'name': 'Portal Contract', 'partner_id': self.customer_company.id,

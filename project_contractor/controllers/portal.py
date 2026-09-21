@@ -38,7 +38,7 @@ class ContractorPortal(CustomerPortal):
         return values
 
     @http.route('/my/contractor', type='http', auth='user', website=True)
-    def home(self):
+    def contractor_home(self):
         return self._render('project_contractor.contractor_portal_home', user=request.env.user)
 
     @http.route('/my/contracts', type='http', auth='user', website=True)
