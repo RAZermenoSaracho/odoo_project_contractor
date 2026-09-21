@@ -38,6 +38,27 @@ class ResPartner(models.Model):
     contractor_project_count = fields.Integer(
         string="Contractor Projects Count", compute='_compute_contractor_work_history',
         groups='project.group_project_user', export_string_translation=False)
+    contractor_won_contract_count = fields.Integer(
+        string="Contracts", compute='_compute_contractor_won_contract_count',
+        groups='project.group_project_user', export_string_translation=False)
+
+    def _get_contractor_won_contract_domain(self):
+        self.ensure_one()
+        return Domain('accepted_proposal_id.contractor_id', '=', self.id)
+
+    def _compute_contractor_won_contract_count(self):
+        Contract = self.env['contract.contract']
+        for partner in self:
+            partner.contractor_won_contract_count = Contract.search_count(partner._get_contractor_won_contract_domain())
+
+    def action_view_contractor_won_contracts(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('project_contractor.action_contract_contract')
+        action.update({
+            'display_name': _("%(partner_name)s's Contracts", partner_name=self.name),
+            'domain': list(self._get_contractor_won_contract_domain()), 'context': {},
+        })
+        return action
 
     @api.model
     def _get_contractor_eligible_domain(self):

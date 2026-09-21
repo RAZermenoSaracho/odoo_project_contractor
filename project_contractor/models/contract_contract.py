@@ -14,6 +14,26 @@ class ContractContract(models.Model):
     proposal_ids = fields.One2many('contract.proposal', 'contract_id', string='Proposals')
     accepted_proposal_id = fields.Many2one('contract.proposal', string='Accepted Proposal', readonly=True, copy=False)
     project_id = fields.Many2one('project.project', string='Execution Project', readonly=True, copy=False)
+    proposal_count = fields.Integer(compute='_compute_proposal_count')
+
+    def _compute_proposal_count(self):
+        for contract in self:
+            contract.proposal_count = len(contract.proposal_ids)
+
+    def action_view_proposals(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('project_contractor.action_contract_proposal')
+        action.update({'domain': [('contract_id', '=', self.id)], 'context': {'default_contract_id': self.id}})
+        return action
+
+    def action_view_project(self):
+        self.ensure_one()
+        if not self.project_id:
+            return False
+        return {
+            'type': 'ir.actions.act_window', 'res_model': 'project.project',
+            'view_mode': 'form', 'res_id': self.project_id.id,
+        }
 
     def _is_customer_owner(self):
         self.ensure_one()

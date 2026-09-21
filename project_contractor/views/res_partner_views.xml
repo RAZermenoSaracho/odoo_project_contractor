@@ -22,6 +22,10 @@
                         invisible="not is_contractor and not contractor_task_count">
                     <field name="contractor_project_count" string="Contractor Projects" widget="statinfo"/>
                 </button>
+                <button class="oe_stat_button" type="object" name="action_view_contractor_won_contracts" icon="fa-file-text-o"
+                        groups="project.group_project_user" invisible="not is_contractor">
+                    <field name="contractor_won_contract_count" string="Contracts" widget="statinfo"/>
+                </button>
             </div>
             <field name="category_id" position="after">
                 <field name="is_contractor"/>

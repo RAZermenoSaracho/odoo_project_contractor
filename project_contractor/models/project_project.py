@@ -24,6 +24,15 @@ class ProjectProject(models.Model):
         self.ensure_one()
         return self.primary_contractor_id == self.env.user.partner_id
 
+    def action_view_contract(self):
+        self.ensure_one()
+        if not self.contract_id:
+            return False
+        return {
+            'type': 'ir.actions.act_window', 'res_model': 'contract.contract',
+            'view_mode': 'form', 'res_id': self.contract_id.id,
+        }
+
     def write(self, vals):
         if self.env.user.is_contractor_user and not self.env.su:
             protected_fields = {

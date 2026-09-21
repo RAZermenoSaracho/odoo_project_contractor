@@ -103,3 +103,40 @@ class TestContractProposalWorkflow(ProjectContractorCommon):
             project.with_user(contractor_a).write({'primary_contractor_id': contractor_b.partner_id.id})
         with self.assertRaises(AccessError):
             self.env['project.task'].with_user(contractor_b).create({'name': 'Denied', 'project_id': project.id})
+
+    def test_contract_navigation_actions_and_won_contracts(self):
+        customer = self._customer('pc_navigation_customer', self.client)
+        contractor_a = self._contractor('pc_navigation_a')
+        contractor_b = self._contractor('pc_navigation_b')
+        won_contract = self._published_contract(customer)
+        won_proposal = self.env['contract.proposal'].with_user(contractor_a).create({
+            'contract_id': won_contract.id, 'amount': 100,
+        })
+        losing_proposal = self.env['contract.proposal'].with_user(contractor_b).create({
+            'contract_id': won_contract.id, 'amount': 200,
+        })
+        won_proposal.with_user(contractor_a).action_submit()
+        losing_proposal.with_user(contractor_b).action_submit()
+        project = won_proposal.with_user(customer).action_accept()
+        other_contract = self._published_contract(customer)
+        other_proposal = self.env['contract.proposal'].with_user(contractor_a).create({
+            'contract_id': other_contract.id, 'amount': 300,
+        })
+
+        self.assertEqual(won_contract.proposal_count, 2)
+        proposal_action = won_contract.action_view_proposals()
+        self.assertEqual(proposal_action['domain'], [('contract_id', '=', won_contract.id)])
+        self.assertEqual(
+            self.env['contract.proposal'].search(proposal_action['domain']), won_proposal | losing_proposal,
+        )
+        self.assertEqual(won_contract.action_view_project()['res_id'], project.id)
+        self.assertEqual(project.action_view_contract()['res_id'], won_contract.id)
+        self.assertFalse(other_contract.action_view_project())
+
+        partner = contractor_a.partner_id
+        self.assertEqual(partner.contractor_won_contract_count, 1)
+        won_action = partner.action_view_contractor_won_contracts()
+        self.assertEqual(won_action['domain'], [('accepted_proposal_id.contractor_id', '=', partner.id)])
+        self.assertEqual(self.env['contract.contract'].search(won_action['domain']), won_contract)
+        self.assertNotIn(other_contract, self.env['contract.contract'].search(won_action['domain']))
+        self.assertEqual(other_proposal.state, 'draft')
