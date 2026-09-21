@@ -1,5 +1,5 @@
 from odoo.exceptions import AccessError
-from odoo.tests import new_test_user
+from odoo.tests import HttpCase, new_test_user
 
 from .common import ProjectContractorCommon
 
@@ -60,3 +60,62 @@ class TestPortalWorkflow(ProjectContractorCommon):
         proposal_a.with_user(contractor_a).action_submit()
         proposal_b.with_user(contractor_b).action_submit()
         self.assertFalse(self.env['contract.proposal'].with_user(contractor_a).search([('id', '=', proposal_b.id)]))
+
+    def test_customer_contract_pages_use_minimal_contractor_identity_projection(self):
+        contractor = self._contractor('pc_portal_independent_identity')
+        contractor.partner_id.write({'name': 'Independent Contractor', 'email': 'private@example.test'})
+        contract = self.env['contract.contract'].with_user(self.customer).create({
+            'name': 'Identity Contract', 'partner_id': self.customer_company.id,
+        })
+        contract.with_user(self.customer).action_publish()
+        proposal = self.env['contract.proposal'].with_user(contractor).create({'contract_id': contract.id, 'amount': 11})
+        proposal.with_user(contractor).action_submit()
+        project = proposal.with_user(self.customer).action_accept()
+        with self.assertRaises(AccessError):
+            contractor.partner_id.with_user(self.customer).read(['name'])
+        identity = contractor.partner_id.sudo().read(['id', 'name'])[0]
+        self.assertEqual(identity, {'id': contractor.partner_id.id, 'name': 'Independent Contractor'})
+        self.assertTrue(self.env['contract.proposal'].with_user(self.customer).search([('id', '=', proposal.id)]))
+        self.assertTrue(self.env['project.project'].with_user(self.customer).search([('id', '=', project.id)]))
+        self.assertNotIn('email', identity)
+        views = self.env.ref('project_contractor.portal_customer_contract') | self.env.ref('project_contractor.portal_proposal') | self.env.ref('project_contractor.portal_project')
+        self.assertNotIn('contractor_id.name', ''.join(views.mapped('arch_db')))
+        self.assertNotIn('primary_contractor_id.name', ''.join(views.mapped('arch_db')))
+
+
+class TestPortalIdentityRenderingHttp(HttpCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.customer = new_test_user(cls.env, login='pc_identity_customer', groups='base.group_portal')
+        cls.other_customer = new_test_user(cls.env, login='pc_identity_other', groups='base.group_portal')
+        customer_company = cls.env['res.partner'].create({'name': 'Identity Customer', 'is_company': True})
+        other_company = cls.env['res.partner'].create({'name': 'Identity Other', 'is_company': True})
+        cls.customer.partner_id.parent_id = customer_company
+        cls.other_customer.partner_id.parent_id = other_company
+        cls.contract = cls.env['contract.contract'].with_user(cls.customer).create({
+            'name': 'Independent identity rendering', 'partner_id': customer_company.id,
+        })
+        cls.contract.with_user(cls.customer).action_publish()
+        cls.contractor = new_test_user(cls.env, login='pc_identity_contractor', groups='base.group_portal')
+        cls.contractor.with_user(cls.contractor).action_become_contractor()
+        cls.contractor.partner_id.write({'name': 'Independent Contractor', 'email': 'private@example.test'})
+        cls.proposal = cls.env['contract.proposal'].with_user(cls.contractor).create({
+            'contract_id': cls.contract.id, 'amount': 11,
+        })
+        cls.proposal.with_user(cls.contractor).action_submit()
+        cls.project = cls.proposal.with_user(cls.customer).action_accept()
+
+    def test_authorized_pages_render_only_contractor_display_identity(self):
+        self.authenticate(self.customer.login, self.customer.login)
+        for url in (
+            f'/my/contracts/{self.contract.id}',
+            f'/my/contracts/{self.contract.id}/proposals/{self.proposal.id}',
+            f'/my/contracts/{self.contract.id}/projects/{self.project.id}',
+        ):
+            response = self.url_open(url)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(b'Independent Contractor', response.content)
+            self.assertNotIn(b'private@example.test', response.content)
+        self.authenticate(self.other_customer.login, self.other_customer.login)
+        self.assertEqual(self.url_open(f'/my/contracts/{self.contract.id}').status_code, 404)

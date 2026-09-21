@@ -27,6 +27,14 @@ class ContractorPortal(CustomerPortal):
         values.update(self._prepare_portal_layout_values())
         return request.render(template, values)
 
+    def _partner_identity(self, partner):
+        """A document-authorized display projection, never a partner grant."""
+        partner = partner.sudo().exists()
+        return {'id': partner.id, 'name': partner.name} if partner else {}
+
+    def _message_identities(self, messages):
+        return {message.id: self._partner_identity(message.author_id) for message in messages}
+
     def _prepare_home_portal_values(self, counters):
         values = super()._prepare_home_portal_values(counters)
         if 'contractor_contract_count' in counters:
@@ -59,7 +67,9 @@ class ContractorPortal(CustomerPortal):
 
     @http.route('/my/contracts/<int:contract_id>', type='http', auth='user', website=True)
     def customer_contract(self, contract_id):
-        return self._render('project_contractor.portal_customer_contract', contract=self._customer_contract(contract_id), page_name='contract')
+        contract = self._customer_contract(contract_id)
+        identities = {proposal.id: self._partner_identity(proposal.contractor_id) for proposal in contract.proposal_ids}
+        return self._render('project_contractor.portal_customer_contract', contract=contract, contractor_identities=identities, page_name='contract')
 
     @http.route('/my/contracts/<int:contract_id>/update', type='http', auth='user', website=True, methods=['POST'])
     def customer_contract_update(self, contract_id, name=None, **post):
@@ -196,9 +206,13 @@ class ContractorPortal(CustomerPortal):
 
     def _proposal_page(self, proposal, customer, url):
         messages = request.env['mail.message'].search([('model', '=', 'contract.proposal'), ('res_id', '=', proposal.id)])
-        return self._render('project_contractor.portal_proposal', proposal=proposal, messages=messages, customer=customer, post_url=f'{url}/message', page_name='proposal')
+        return self._render('project_contractor.portal_proposal', proposal=proposal, messages=messages,
+            contractor_identity=self._partner_identity(proposal.contractor_id),
+            message_identities=self._message_identities(messages), customer=customer, post_url=f'{url}/message', page_name='proposal')
 
     def _project_page(self, project, customer, url):
         messages = request.env['mail.message'].search([('model', '=', 'project.project'), ('res_id', '=', project.id)])
         tasks = request.env['project.task'].search([('project_id', '=', project.id)]) if not customer else request.env['project.task']
-        return self._render('project_contractor.portal_project', project=project, messages=messages, tasks=tasks, customer=customer, post_url=f'{url}/message', page_name='project')
+        return self._render('project_contractor.portal_project', project=project, messages=messages, tasks=tasks,
+            contractor_identity=self._partner_identity(project.primary_contractor_id),
+            message_identities=self._message_identities(messages), customer=customer, post_url=f'{url}/message', page_name='project')
