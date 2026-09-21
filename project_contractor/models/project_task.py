@@ -64,14 +64,20 @@ class ProjectTask(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         if self.env.user.is_contractor_user:
-            raise AccessError(_("Contractors cannot create tasks at this access-foundation stage."))
+            project_ids = [vals.get('project_id') for vals in vals_list]
+            projects = self.env['project.project'].browse([project_id for project_id in project_ids if project_id])
+            if not all(project_ids) or any(not project._is_assigned_contractor() for project in projects):
+                raise AccessError(_("Only the Assigned Contractor can create Tasks in their Project."))
         tasks = super().create(vals_list)
         tasks._contractor_invalidate_derived_values(tasks.mapped('contractor_id'), tasks.mapped('project_id'))
         return tasks
 
     def write(self, vals):
-        if self.env.user.is_contractor_user and {'contractor_id', 'user_ids', 'project_id'} & vals.keys():
-            raise AccessError(_("Contractors cannot change Project task assignments."))
+        if self.env.user.is_contractor_user:
+            if 'project_id' in vals:
+                raise AccessError(_("Contractors cannot move Tasks between Projects."))
+            if any(not task.project_id._is_assigned_contractor() for task in self):
+                raise AccessError(_("Only the Assigned Contractor can update Tasks in their Project."))
         contractors = self.mapped('contractor_id')
         projects = self.mapped('project_id')
         result = super().write(vals)
@@ -83,7 +89,8 @@ class ProjectTask(models.Model):
 
     def unlink(self):
         if self.env.user.is_contractor_user:
-            raise AccessError(_("Contractors cannot delete tasks at this access-foundation stage."))
+            if any(not task.project_id._is_assigned_contractor() for task in self):
+                raise AccessError(_("Only the Assigned Contractor can delete Tasks in their Project."))
         contractors = self.mapped('contractor_id')
         projects = self.mapped('project_id')
         result = super().unlink()

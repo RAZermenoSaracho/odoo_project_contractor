@@ -19,6 +19,10 @@ class TestContractorAccessControl(ProjectContractorCommon):
         open_project = Project.create({'name': 'Open Project', 'privacy_visibility': 'employees'})
         own_project = Project.create({'name': 'Own Project', 'privacy_visibility': 'employees'})
         other_project = Project.create({'name': 'Other Project', 'privacy_visibility': 'employees'})
+        own_project.action_assign_primary_contractor(contractor.partner_id.id)
+        other_contractor = new_test_user(self.env, login='pc_other_contractor', groups='base.group_portal')
+        other_contractor.with_user(other_contractor).action_become_contractor()
+        other_project.action_assign_primary_contractor(other_contractor.partner_id.id)
         open_task = self.create_task('Open Task', open_project, user_ids=[Command.clear()])
         own_task = self.create_task(
             'Own Task', own_project, contractor_id=contractor.partner_id.id, user_ids=[Command.clear()])
@@ -71,7 +75,8 @@ class TestContractorAccessControl(ProjectContractorCommon):
         with self.assertRaises(AccessError):
             other_task.with_user(contractor).read(['name'])
 
-        open_project.with_user(contractor).write({'name': 'Renamed Open Project'})
+        with self.assertRaises(AccessError):
+            open_project.with_user(contractor).write({'name': 'Renamed Open Project'})
         own_task.with_user(contractor).write({'name': 'Renamed Own Task'})
         with self.assertRaises(AccessError):
             Project.create({'name': 'Contractor Project'})
@@ -79,8 +84,6 @@ class TestContractorAccessControl(ProjectContractorCommon):
             open_project.with_user(contractor).unlink()
         with self.assertRaises(AccessError):
             Task.create({'name': 'Contractor Task', 'project_id': open_project.id})
-        with self.assertRaises(AccessError):
-            own_task.with_user(contractor).unlink()
 
     def test_contractor_cannot_change_customer_or_assignment_relationships(self):
         contractor, _partner_id = self._activate_contractor()
@@ -89,10 +92,6 @@ class TestContractorAccessControl(ProjectContractorCommon):
             open_project.with_user(contractor).write({'partner_id': self.client.id})
         with self.assertRaises(AccessError):
             own_project.with_user(contractor).write({'user_id': self.project_user.id})
-        with self.assertRaises(AccessError):
-            own_task.with_user(contractor).write({'contractor_id': False})
-        with self.assertRaises(AccessError):
-            own_task.with_user(contractor).write({'user_ids': [Command.link(self.project_user.id)]})
         with self.assertRaises(AccessError):
             own_task.with_user(contractor).write({'project_id': open_project.id})
 
@@ -149,5 +148,9 @@ class TestContractorAccessControl(ProjectContractorCommon):
         with self.assertRaises(AccessError):
             Task.create({'name': 'Bypass attempt'})
         self.assertTrue(Task.has_access('unlink'))
+        open_project = self.env['project.project'].with_context(mail_create_nolog=True).create({
+            'name': 'Open Project', 'privacy_visibility': 'employees',
+        })
+        open_task = self.create_task('Open Task', open_project)
         with self.assertRaises(AccessError):
-            Task.unlink()
+            open_task.with_user(contractor).unlink()

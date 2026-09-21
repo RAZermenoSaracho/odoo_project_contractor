@@ -6,6 +6,15 @@
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.edit_project"/>
         <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <group string="Contract" groups="project.group_project_manager">
+                    <field name="contractor_lifecycle"/>
+                    <field name="candidate_contractor_ids" widget="many2many_tags"/>
+                    <field name="primary_contractor_id"/>
+                    <field name="contractor_compensation_amount"/>
+                    <field name="contractor_compensation_currency_id"/>
+                </group>
+            </field>
             <div name="button_box" position="inside">
                 <button class="oe_stat_button" type="object" name="action_view_contractor_tasks" icon="fa-users"
                         groups="project.group_project_user">

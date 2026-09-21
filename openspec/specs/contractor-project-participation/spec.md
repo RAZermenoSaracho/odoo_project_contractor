@@ -1,7 +1,8 @@
 # contractor-project-participation Specification
 
 ## Purpose
-Shows which external contractors take part in a project, derived entirely from the project's tasks, so the project level never holds a second, conflicting source of truth.
+Shows historical contractor participation derived from tasks, separately from
+the Project Contract's primary assignment and candidate membership.
 
 ## Requirements
 
@@ -25,11 +26,20 @@ A project's participating contractors SHALL be the distinct contractors of its t
 - **THEN** the contractor set and count immediately reflect the changed eligible tasks
 
 ### Requirement: No project-level contractor designations in v1
-Projects SHALL NOT store their own contractor designations (for example a primary contractor or a list of eligible contractors) in v1. Contractor participation SHALL have exactly one source of truth: task contractor assignments.
+Historical task participation SHALL remain derived from task contractor
+assignments and SHALL not be editable as a second historical source of truth.
+The Project/Contract MAY additionally store one primary Assigned Contractor and
+candidate membership for recruitment and authorization; neither value replaces
+the task-derived participation history.
+
+#### Scenario: Assignment does not rewrite history
+- **WHEN** a customer selects a primary Contractor for a Project with no task contractor assignments
+- **THEN** the Project has a primary Contractor and historical participation remains empty
 
 #### Scenario: Project has no editable contractor field
 - **WHEN** a project manager edits a project
-- **THEN** no contractor value can be entered on the project itself
+- **THEN** task-derived historical participation cannot be edited directly
+- **AND** the separate primary Contractor and candidate controls follow their lifecycle authority
 
 ### Requirement: Contractor count and navigation from the project
 A project SHALL display the number of its participating contractors to users who can access the project's tasks. From the project, such a user SHALL be able to open the project's contracted tasks grouped by contractor.
