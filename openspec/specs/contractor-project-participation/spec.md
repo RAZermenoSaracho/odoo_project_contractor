@@ -2,7 +2,7 @@
 
 ## Purpose
 Shows historical contractor participation derived from tasks, separately from
-the Project Contract's primary assignment and candidate membership.
+the awarded Project's execution assignment.
 
 ## Requirements
 
@@ -25,21 +25,22 @@ A project's participating contractors SHALL be the distinct contractors of its t
 - **WHEN** participation is read, the last task is reassigned or archived, and participation is read again in the same transaction without manual cache invalidation
 - **THEN** the contractor set and count immediately reflect the changed eligible tasks
 
-### Requirement: No project-level contractor designations in v1
+### Requirement: Historical participation remains separate from award assignment
 Historical task participation SHALL remain derived from task contractor
 assignments and SHALL not be editable as a second historical source of truth.
-The Project/Contract MAY additionally store one primary Assigned Contractor and
-candidate membership for recruitment and authorization; neither value replaces
-the task-derived participation history.
+The Project MAY additionally expose its one Assigned Contractor through its
+accepted Proposal; that award relationship does not replace task-derived
+participation history. Project candidate membership is not a recruitment or
+authorization mechanism in the target workflow.
 
 #### Scenario: Assignment does not rewrite history
-- **WHEN** a customer selects a primary Contractor for a Project with no task contractor assignments
-- **THEN** the Project has a primary Contractor and historical participation remains empty
+- **WHEN** a customer's Proposal is accepted for a Project with no task contractor assignments
+- **THEN** the Project has an Assigned Contractor and historical participation remains empty
 
 #### Scenario: Project has no editable contractor field
 - **WHEN** a project manager edits a project
 - **THEN** task-derived historical participation cannot be edited directly
-- **AND** the separate primary Contractor and candidate controls follow their lifecycle authority
+- **AND** the separate award assignment follows its execution authority
 
 ### Requirement: Contractor count and navigation from the project
 A project SHALL display the number of its participating contractors to users who can access the project's tasks. From the project, such a user SHALL be able to open the project's contracted tasks grouped by contractor.

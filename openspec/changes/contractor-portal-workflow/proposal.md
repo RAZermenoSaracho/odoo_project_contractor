@@ -7,8 +7,8 @@ the native lifecycle usable without relying on RAZS-specific presentation.
 
 ## What Changes
 
-- Provide customer Project creation, ownership/participation lists, Contractor directory, invite/contact, and assignment controls.
-- Provide Contractor activation, profile, discoverable/candidate/assigned lists, authorized communication, and work navigation.
+- Provide customer Contract creation, commercial-entity ownership lists, publish/review/accept Proposal controls, and Contractor directory contact/invitation.
+- Provide Contractor activation, profile, published Contract browsing, own Proposal, assigned Project, authorized communication, and work navigation.
 - Keep templates minimal, generic, and reusable by a branded inheriting addon.
 
 ## Capabilities
@@ -22,4 +22,4 @@ the native lifecycle usable without relying on RAZS-specific presentation.
 ## Impact
 
 Touches portal controllers, QWeb templates, native portal checks, and focused
-controller/ORM tests; depends on lifecycle and communication phases.
+controller/ORM tests; depends on Contract/Proposal lifecycle and communication phases.

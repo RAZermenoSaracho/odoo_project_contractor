@@ -2,63 +2,55 @@
 
 ## Purpose
 
-Uses one `project.project` as the customer-to-Contractor contract and workspace,
-with a small, explicit recruitment and assignment lifecycle.
+Defines `project.project` as the execution workspace created by an accepted
+Contract Proposal, rather than as a recruitment opportunity.
 
 ## Requirements
 
-### Requirement: Project is the Contract
-A customer-facing Project SHALL be the Contract/workspace in v1. The addon
-SHALL NOT create a separate contract, proposal, bidding, invoice, or payment
-domain merely to represent the workflow.
+### Requirement: Award creates one linked execution Project
 
-#### Scenario: Customer creates a contract
-- **WHEN** a customer creates a Contract through the workflow
-- **THEN** the system creates a Project owned by that customer's partner relationship
+Accepting a Contract Proposal SHALL create exactly one execution Project linked
+to its Contract and accepted Proposal. Retrying or concurrently invoking the
+acceptance transition SHALL return or preserve that one Project and SHALL NOT
+create a duplicate award or execution workspace.
 
-### Requirement: Customer ownership follows the commercial entity
-For customer portal ownership, a Project's `partner_id` SHALL identify the
-customer contact relationship. An authenticated portal user SHALL be a customer
-owner when that user's `partner_id.commercial_partner_id` equals the Project
-customer's `partner_id.commercial_partner_id`. The rule SHALL include the
-customer's normal parent/child contacts under that one commercial entity and
-SHALL NOT grant access to a different commercial entity merely because it is a
-contact, follower, candidate, collaborator, or Contractor.
+#### Scenario: Acceptance is retried
 
-#### Scenario: Colleague manages a company Contract
-- **WHEN** a Project customer is a contact of Acme and another portal user is a
-  contact of Acme with the same commercial partner
-- **THEN** that user can access and manage the Project as its customer
+- **WHEN** a customer repeats acceptance of the same accepted Proposal
+- **THEN** the Contract retains one accepted Proposal and one linked Project
 
-#### Scenario: Unrelated contact is denied
-- **WHEN** a portal user belongs to a commercial entity different from the
-  Project customer's commercial partner
-- **THEN** that user cannot access or manage the Project through customer ownership
+### Requirement: Project assignment derives from the accepted Proposal
 
-### Requirement: One primary Contractor and multiple candidates
-A Project/Contract SHALL have at most one primary Assigned Contractor in v1 and
-MAY have multiple Participants/Candidates during recruitment. Inviting or
-contacting a Contractor SHALL NOT make that Contractor the primary assignment.
+The accepted Proposal's Contractor SHALL be the execution Project's one
+Assigned Contractor. Project candidate memberships, unassigned-Project
+Contractor discovery, and Project-based recruitment SHALL NOT be used in the
+target workflow.
 
-#### Scenario: Invitation does not assign
-- **WHEN** a customer invites a Contractor to a Project
-- **THEN** the Contractor is a Participant/Candidate and the primary Contractor remains unset
+#### Scenario: Awarded Contractor opens the Project
 
-### Requirement: Minimal compensation terms
-A Project/Contract SHALL represent an agreed or proposed compensation amount and
-currency. Discussion of terms SHALL use the workflow communication; v1 SHALL
-NOT implement invoicing, escrow, milestones, or payment processing.
+- **WHEN** a Proposal is accepted for Contractor A
+- **THEN** the linked Project is assigned to A and Contractor B cannot access it through the Contractor role
 
-#### Scenario: Compensation is recorded
-- **WHEN** a customer records a proposed amount and currency
-- **THEN** the Project retains those structured values without creating an invoice or payment
+### Requirement: Project preserves execution boundaries
 
-### Requirement: Lifecycle authority
-A Project/Contract SHALL distinguish Discoverable, Participant/Candidate, and
-Assigned Contractor authority. Discoverable work has no primary Contractor;
-Participant/Candidate admission is private recruitment access; Assigned
-Contractor grants operational work authority.
+An Assigned Contractor MAY make the defined operational Project updates and
+manage Tasks in that Project. They SHALL NOT change the Project customer,
+Contract/Proposal linkage, assigned Contractor, award terms, or closure state.
+Customer commercial ownership and authorized internal staff retain those
+commercial operations.
 
-#### Scenario: Candidate is not operationally assigned
-- **WHEN** a candidate has not been selected as the primary Contractor
-- **THEN** that candidate cannot perform Assigned Contractor project or task operations
+#### Scenario: Assigned Contractor cannot change award relationship
+
+- **WHEN** the Assigned Contractor writes a protected customer, assignment, or linkage field
+- **THEN** the operation is denied
+
+### Requirement: Accepted Proposal is commercial source of truth
+
+The accepted Proposal SHALL remain the authoritative amount and currency for
+the award. A Project MAY expose a read-only related display where useful, but
+SHALL NOT maintain an independently editable competing commercial record.
+
+#### Scenario: Operational Project displays agreed terms
+
+- **WHEN** an authorized user views the awarded Project
+- **THEN** any displayed agreed amount and currency correspond to its accepted Proposal

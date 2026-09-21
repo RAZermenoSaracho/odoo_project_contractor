@@ -18,8 +18,8 @@ access addon.
 - **THEN** its generic Contractor data, security, and portal workflow are available without RAZS-specific modules
 
 ### Requirement: Required native dependencies
-The addon SHALL declare the upstream dependencies needed for its Project,
-authenticated portal, and website workflow. It SHALL NOT depend on Sales, HR,
+The addon SHALL declare the upstream dependencies needed for its Contract,
+Proposal, Project, authenticated portal, and website workflow. It SHALL NOT depend on Sales, HR,
 Accounting, payment, or a marketplace addon merely to provide the core workflow.
 
 #### Scenario: No commercial subsystem prerequisite
@@ -38,7 +38,8 @@ brand those views without changing Contractor domain or access behavior.
 ### Requirement: Upstream-safe data extension
 The addon SHALL extend standard Contacts, Projects, Tasks, and native
 communication mechanisms without replacing their unrelated behavior. Existing
-projects remain ordinary projects until a Contractor workflow relationship is set.
+projects remain ordinary projects until an awarded Contractor workflow
+relationship is set.
 
 #### Scenario: Existing project remains unchanged
 - **WHEN** the addon is installed with existing Projects

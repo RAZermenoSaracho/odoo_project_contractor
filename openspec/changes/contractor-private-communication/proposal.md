@@ -2,15 +2,16 @@
 
 ## Why
 
-Open Project discovery must not expose negotiation. The product needs private
-customer-to-candidate communication, but Odoo-native communication must be
-selected and scoped carefully rather than recreated.
+Published Contract browsing must not expose negotiation. The product needs one
+private customer-to-Contractor conversation per Proposal, and operational
+communication after award, using native Odoo mechanisms rather than recreating
+messaging.
 
 ## What Changes
 
-- Investigate and adopt the smallest safe native Odoo mail/Discuss mechanism for a Project's private candidate audience.
-- Bind communication membership to customer, candidate, assigned Contractor, and authorized staff.
-- Keep recruitment messages separate from the discoverable Project projection.
+- Investigate and adopt the smallest safe native Odoo mail/Discuss mechanism for each Proposal's private audience.
+- Bind Proposal communication to the customer commercial entity, that Proposal's Contractor, and authorized staff only.
+- Use Project chatter only for post-award operational communication, separate from Proposal negotiation history.
 
 ## Capabilities
 
@@ -22,5 +23,6 @@ selected and scoped carefully rather than recreated.
 
 ## Impact
 
-Touches native Odoo mail/Discuss integration, Project participation, portal authorization,
-and communication security tests; no custom message store.
+Touches native Odoo mail/Discuss integration, Contract/Proposal access, Project
+execution communication, portal authorization, and communication security tests;
+no custom message store.

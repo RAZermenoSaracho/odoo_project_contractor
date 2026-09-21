@@ -2,34 +2,35 @@
 
 ## Purpose
 
-Adds the minimal Project-as-Contract lifecycle separating discovery, candidate
-recruitment, and selected Contractor work authority.
+Defines the Contractor's execution authority after a Proposal has been awarded
+and a Project has been created.
 
 ## Requirements
 
-### Requirement: One Project Contract has one primary Contractor
+### Requirement: Only an Assigned Contractor accesses an execution Project
 
-A Project/Contract SHALL have zero or one primary Assigned Contractor and MAY
-have multiple admitted Candidates. Invitation, contact, or a candidate reply
-SHALL NOT assign the primary Contractor.
+A Contractor SHALL access an execution Project through being that Project's
+Assigned Contractor. Contractors SHALL NOT browse unassigned Projects or use
+Project candidate membership as a recruitment relationship. A Project assigned
+to another Contractor SHALL be inaccessible through the Contractor role.
 
-#### Scenario: Several candidates remain unassigned
+#### Scenario: Other Contractor cannot find Project
 
-- **WHEN** a customer admits two Contractors as candidates
-- **THEN** both remain candidates while the primary Contractor is unset
+- **WHEN** Contractor B searches for a Project assigned to Contractor A
+- **THEN** the Project is absent from B's Contractor-visible results
 
-### Requirement: Contractor task authority is lifecycle-specific
+### Requirement: Task authority is assignment-specific
 
-A Discoverable Contractor and a Candidate SHALL have no Task create, write, or
-delete authority. The Assigned Contractor SHALL have Task create, read, write,
-and delete authority only in their assigned Project.
+The Assigned Contractor SHALL have create, read, write, and delete authority
+for Tasks in their assigned execution Project. A Contractor without that
+assignment SHALL have no Task mutation authority for the Project.
 
 #### Scenario: Assigned Contractor creates a task
 
 - **WHEN** the primary Contractor creates a Task in their assigned Project
 - **THEN** creation succeeds
 
-#### Scenario: Candidate cannot edit task
+#### Scenario: Unassigned Contractor cannot edit Task
 
-- **WHEN** a candidate modifies a Task in a Project where they are not primary
+- **WHEN** a Contractor who is not assigned to the Project modifies its Task
 - **THEN** the operation is denied

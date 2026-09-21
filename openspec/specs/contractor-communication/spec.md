@@ -2,35 +2,42 @@
 
 ## Purpose
 
-Provides private, native-Odoo communication for recruitment and active contract
-work without exposing a Project's private discussion to every discoverer.
+Provides private, native-Odoo communication with separate recruitment and
+execution boundaries.
 
 ## Requirements
 
-### Requirement: Private participant communication
-Contract communication SHALL be readable only by the relevant customer,
-admitted Participants/Candidates, the Assigned Contractor, and appropriately
-authorized internal staff. Discovering an open Project SHALL NOT grant access to
-its private negotiation or messages.
+### Requirement: Proposal negotiation is private
 
-#### Scenario: Discoverer cannot read negotiation
-- **WHEN** a Contractor discovers an open Project without being admitted as a Participant
-- **THEN** that Contractor cannot read its private recruitment communication
+Each Proposal's recruitment communication SHALL be readable only by the
+Proposal's Contractor, users of the Contract customer's commercial entity as
+authorized for that Contract, and appropriately authorized internal staff.
+Publishing or browsing a Contract SHALL NOT grant access to any Proposal or its
+messages, including another Contractor's Proposal.
+
+#### Scenario: Contractor cannot read a competing Proposal
+
+- **WHEN** Contractor A has a Proposal for a published Contract and Contractor B has a different Proposal
+- **THEN** A cannot read B's Proposal or B's negotiation messages
+
+### Requirement: Project chatter is operational communication after award
+
+After award, Project chatter SHALL be the operational communication surface for
+the customer commercial entity, the Assigned Contractor, and authorized
+internal staff. Proposal chatter SHALL remain the private recruitment history
+and SHALL NOT be exposed merely because a Project was awarded.
+
+#### Scenario: Award does not reveal competing negotiations
+
+- **WHEN** a customer's Proposal from Contractor A is accepted
+- **THEN** the resulting Project does not expose Contractor B's Proposal messages to A
 
 ### Requirement: Native communication reuse
 The addon SHALL reuse Odoo mail, chatter, followers, project sharing, or Discuss
 facilities where they meet the required audience boundary. It SHALL NOT create a
 parallel custom messaging subsystem.
 
-#### Scenario: Participant sends a message
-- **WHEN** an admitted participant sends a recruitment message
-- **THEN** it is delivered through the selected native Odoo communication mechanism to the authorized audience
+#### Scenario: Proposal participant sends a message
 
-### Requirement: Communication membership follows participation
-Adding, withdrawing, assigning, or removing a Participant/Candidate SHALL add
-or remove their private communication access consistently. Reassignment SHALL
-not expose historic private communication to unrelated Contractors.
-
-#### Scenario: Withdrawn candidate loses access
-- **WHEN** a customer withdraws a candidate from a Project
-- **THEN** that candidate can no longer access its private recruitment communication
+- **WHEN** an authorized Proposal participant sends a negotiation message
+- **THEN** it is delivered through the selected native Odoo mechanism only to its authorized audience

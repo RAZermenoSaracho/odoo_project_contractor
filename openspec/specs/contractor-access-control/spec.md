@@ -34,30 +34,29 @@ the Contractor role.
 - **WHEN** a Contractor attempts to read or edit another partner record
 - **THEN** access is denied
 
-### Requirement: Project and task access follows lifecycle authority
-Contractor access to a Project and its Tasks SHALL follow the current Contractor
-relationship to that Project: Discoverable, Participant/Candidate, or Assigned
-Contractor. A Discoverable Contractor may read only permitted opportunity
-information and existing Tasks; a Participant/Candidate may use authorized
-private communication but may not mutate the Project or Tasks; an Assigned
-Contractor may operationally write their Project but may not alter customer,
-primary assignment, reassignment, or closure, and may create, read, write, and
-delete Tasks only in that Project. A Contractor SHALL never obtain access to a
-Project assigned solely to another Contractor.
+### Requirement: Contract, Proposal, Project, and Task authority
+A Contractor MAY read published Contracts and create or manage only their own
+Proposals for those Contracts. A Contractor SHALL not access draft or private
+Contracts merely through the Contractor role, nor another Contractor's Proposal.
+An Assigned Contractor may operationally write only their awarded execution
+Project and create, read, write, and delete Tasks only in that Project. A
+Contractor SHALL never obtain access to a Project assigned to another
+Contractor, nor browse unassigned Projects as work opportunities.
 
-#### Scenario: Other contractor project is hidden
+#### Scenario: Other contractor Project is hidden
 - **WHEN** a Contractor searches Projects assigned only to another Contractor
 - **THEN** those Projects are absent from the result
 
-#### Scenario: Open opportunity is read-only
-- **WHEN** a Contractor opens a Discoverable Project
-- **THEN** they can read permitted information but cannot mutate the Project or its Tasks
+#### Scenario: Competing Proposal is hidden
+- **WHEN** a Contractor searches Proposals submitted by another Contractor
+- **THEN** those Proposals are absent from the result
 
 ### Requirement: Contractors cannot alter the commercial relationship
-A Contractor SHALL NOT assign or reassign the primary Contractor, change the
-customer, or close a Project/Contract. Those operations belong to the customer
-or appropriately authorized internal staff.
+A Contractor SHALL NOT change a Contract customer, publish or close a Contract,
+accept or reject another Proposal, assign or reassign a Project Contractor, or
+change a Project's commercial relationship. Those operations belong to the
+customer commercial entity or appropriately authorized internal staff.
 
 #### Scenario: Contractor attempts reassignment
-- **WHEN** an Assigned Contractor attempts to change the Project's customer or primary Contractor
+- **WHEN** an Assigned Contractor attempts to change the Project's customer or Contractor assignment
 - **THEN** the operation is denied

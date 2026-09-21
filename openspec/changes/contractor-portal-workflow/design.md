@@ -17,13 +17,17 @@ custom frontend frameworks, payment, or a separate portal security engine.
 
 - Use module-owned QWeb templates and authenticated controllers with CSRF-safe
   mutations. Query protected records as the requesting user where possible.
-- Reuse `project.project.partner_id` for customer ownership. A customer user is
-  authorized when their partner and the Project customer have the same
+- Reuse `contract.contract.partner_id` for customer ownership. A customer user is
+  authorized when their partner and the Contract customer have the same
   `commercial_partner_id`; express this through native partner hierarchy/domain
-  semantics, not a custom organization or membership model. Share only a limited
-  Discoverable projection.
-- Customer assignment/reassignment/closure controls verify ownership or explicit
-  internal authority. Contractor pages never offer those mutations.
+  semantics, not a custom organization or membership model.
+- Customer controls create, edit, publish, and cancel Contracts; review and
+  negotiate each Proposal; and accept one Proposal. Acceptance is the only
+  customer action that creates an execution Project and assigns its Contractor.
+  Contractor pages never offer those mutations.
+- Contractor pages expose only published Contract projections, the requester's
+  own Proposals, and execution Projects assigned to that Contractor. They do not
+  expose Project candidate or unassigned-opportunity views.
 - Contractor directory exposes an intentionally publishable profile projection,
   not arbitrary `res.partner` data.
 
@@ -31,4 +35,5 @@ custom frontend frameworks, payment, or a separate portal security engine.
 
 - [Portal rules and controllers diverge] → test each route and avoid `sudo` except narrowly audited creation.
 - [A broad partner hierarchy query leaks an unrelated entity] → test same-entity
-  parent/child access and different-commercial-partner denial for every customer route.
+  parent/child access and different-commercial-partner denial for every Contract,
+  Proposal, and Project customer route.

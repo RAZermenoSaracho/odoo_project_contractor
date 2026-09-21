@@ -3,33 +3,27 @@
 ## Purpose
 
 Defines the minimal generic portal and website journeys for customers and
-Contractors to complete the Project/Contract workflow.
+Contractors through Contract, Proposal, and Project execution.
 
 ## Requirements
 
-### Requirement: Customer portal workflow
-An authenticated portal customer SHALL be able to create a Project/Contract,
-view and manage Projects owned by their commercial entity or in which they
-otherwise participate, browse available Contractor
-profiles, and invite/contact a Contractor for a specific Project.
+### Requirement: Customer Contract workflow
+An authenticated portal customer SHALL be able to create, manage, and publish
+Contracts owned by their commercial entity; review their Contracts' individual
+Proposals; communicate in each authorized Proposal; and accept one Proposal.
 
-#### Scenario: Customer invites a Contractor
-- **WHEN** a customer selects a Contractor from the generic directory for one of their Projects
-- **THEN** the Contractor becomes a private Participant/Candidate, not the Assigned Contractor
+#### Scenario: Customer reviews independent Proposals
+- **WHEN** two Contractors submit Proposals for one published Contract
+- **THEN** the customer can review each private Proposal without exposing either one to the competing Contractor
 
-#### Scenario: Commercial-entity customer access
-- **WHEN** two portal users belong to the Project customer's same commercial entity
-- **THEN** either can use the customer workflow for that Project
-
-### Requirement: Contractor portal workflow
+### Requirement: Contractor workflow
 An authenticated portal user SHALL be able to activate Contractor access, edit
-their permitted profile, browse discoverable opportunities, see Projects where
-they are a Participant or Assigned Contractor, and enter only communication or
-work pages authorized for their lifecycle state.
+their permitted profile, browse published Contracts, create and manage only
+their Proposals, and work in Projects to which they are assigned.
 
-#### Scenario: Contractor sees authorized opportunities
-- **WHEN** a Contractor opens their workflow landing page
-- **THEN** it distinguishes discoverable, candidate, and assigned Projects without disclosing private candidate data for discoverable work
+#### Scenario: Contractor sees only award work
+- **WHEN** a Contractor opens their workflow landing page after another Contractor is awarded
+- **THEN** they can still browse eligible published Contracts but cannot open the other Contractor's Project
 
 ### Requirement: Minimal reusable presentation
 The module SHALL supply functional, intentionally minimal QWeb portal/website
