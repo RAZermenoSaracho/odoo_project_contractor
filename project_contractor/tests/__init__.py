@@ -7,3 +7,4 @@ from . import test_project_lifecycle
 from . import test_distribution
 from . import test_ui
 from . import test_private_communication
+from . import test_portal_workflow
