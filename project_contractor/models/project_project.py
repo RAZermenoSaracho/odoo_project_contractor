@@ -8,6 +8,10 @@ from odoo.fields import Domain
 class ProjectProject(models.Model):
     _inherit = 'project.project'
 
+    # Customers have read-only operational access.  Let native chatter use
+    # that access without also granting Project write rights.
+    _mail_post_access = 'read'
+
     primary_contractor_id = fields.Many2one(
         'res.partner', string="Assigned Contractor", copy=False, tracking=True, readonly=True,
         domain="['|', ('is_contractor', '=', True), ('commercial_partner_id.is_contractor', '=', True)]",

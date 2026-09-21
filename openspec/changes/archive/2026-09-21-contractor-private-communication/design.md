@@ -28,6 +28,14 @@ subsystem, public discussion, or outbound-commercial messaging.
 - A private native Discuss channel is an acceptable fallback only if Proposal
   chatter cannot safely meet the boundary. It remains native infrastructure, not
   a custom messaging subsystem.
+- Verification selected record-bound native chatter: both `contract.proposal`
+  and the awarded `project.project` use `_mail_post_access = 'read'`, so a
+  participant may post without receiving business-record write authority.
+  Odoo 19 Community's `mail.message` access path then verifies parent-record
+  access for searches and reads. Existing Proposal rules isolate each
+  Contractor's record; the added customer execution-Project rule limits
+  customer access to Projects linked to its commercial entity. No follower,
+  channel, or general Discuss grant is used.
 
 ## Risks / Trade-offs
 

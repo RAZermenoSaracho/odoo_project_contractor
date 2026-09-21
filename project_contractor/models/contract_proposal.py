@@ -7,6 +7,9 @@ class ContractProposal(models.Model):
     _description = 'Contract Proposal'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'id desc'
+    # Negotiation is discussion, not a Proposal-field mutation.  Native mail
+    # message access still checks this Proposal's ordinary read ACL/rules.
+    _mail_post_access = 'read'
 
     contract_id = fields.Many2one('contract.contract', required=True, ondelete='cascade', index=True)
     contractor_id = fields.Many2one('res.partner', required=True, string='Contractor', readonly=True, index=True)
