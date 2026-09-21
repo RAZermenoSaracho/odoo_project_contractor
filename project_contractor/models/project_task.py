@@ -68,7 +68,11 @@ class ProjectTask(models.Model):
             projects = self.env['project.project'].browse([project_id for project_id in project_ids if project_id])
             if not all(project_ids) or any(not project._is_assigned_contractor() for project in projects):
                 raise AccessError(_("Only the Assigned Contractor can create Tasks in their Project."))
-        tasks = super().create(vals_list)
+        # Project's mail-enabled create path rechecks its broad ACL after the
+        # narrow assigned-Project guard above.  Create as sudo only after that
+        # exact scope check, then return to the caller's environment.
+        tasks = (super(ProjectTask, self.sudo()).create(vals_list).with_env(self.env)
+                 if self.env.user.is_contractor_user else super().create(vals_list))
         tasks._contractor_invalidate_derived_values(tasks.mapped('contractor_id'), tasks.mapped('project_id'))
         return tasks
 

@@ -1,4 +1,10 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_contractor_project,contractor project,project.model_project_project,project_contractor.group_contractor,1,1,0,0
-access_contractor_task,contractor task,project.model_project_task,project_contractor.group_contractor,1,1,0,0
+access_contractor_task,contractor task,project.model_project_task,project_contractor.group_contractor,1,1,1,1
 access_contractor_partner,contractor own contact,base.model_res_partner,project_contractor.group_contractor,1,1,0,0
+access_contractor_contract,contractor published contract,model_contract_contract,project_contractor.group_contractor,1,0,0,0
+access_customer_contract,customer contract,model_contract_contract,base.group_portal,1,1,1,1
+access_contractor_proposal,contractor own proposal,model_contract_proposal,project_contractor.group_contractor,1,1,1,0
+access_customer_proposal,customer contract proposal,model_contract_proposal,base.group_portal,1,1,1,0
+access_manager_contract,contract manager,model_contract_contract,project.group_project_manager,1,1,1,1
+access_manager_proposal,contract proposal manager,model_contract_proposal,project.group_project_manager,1,1,1,1

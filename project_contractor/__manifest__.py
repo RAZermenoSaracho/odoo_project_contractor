@@ -1,6 +1,6 @@
 {
     "name": "Project Contractors",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "category": "Services/Project",
     "summary": "Assign external contractors to project tasks without making them Odoo users",
     "description": """
@@ -23,10 +23,12 @@ legal contracts, subscriptions, or employment contracts.
     "author": "Ricardo Zermeño",
     "website": "https://github.com/RAZermenoSaracho/odoo_project_contractor",
     "license": "LGPL-3",
-    "depends": ["project", "portal", "website"],
+    "depends": ["project", "portal", "website", "mail"],
     "data": [
         "security/project_contractor_security.xml",
         "security/ir.model.access.csv",
+        "views/contract_contract_views.xml",
+        "views/contract_proposal_views.xml",
         "views/res_partner_views.xml",
         "views/project_task_views.xml",
         "views/project_project_views.xml",

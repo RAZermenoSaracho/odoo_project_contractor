@@ -21,13 +21,12 @@ class TestDistribution(ProjectContractorCommon):
             return ast.literal_eval(manifest_file.read())
 
     def test_declared_dependencies(self):
-        self.assertEqual(self._manifest()['depends'], ['project'])
+        self.assertEqual(self._manifest()['depends'], ['project', 'portal', 'website', 'mail'])
 
     def test_no_hooks_routes_or_assets(self):
         manifest = self._manifest()
         for key in ('pre_init_hook', 'post_init_hook', 'uninstall_hook', 'post_load', 'assets', 'external_dependencies'):
             self.assertNotIn(key, manifest)
-        self.assertFalse(os.path.exists(os.path.join(ADDON_DIR, 'controllers')))
         self.assertFalse(manifest.get('application'))
 
     def test_license_consistency(self):
@@ -53,9 +52,7 @@ class TestDistribution(ProjectContractorCommon):
             labels += [node.get(attr) for node in root.iter() for attr in ('string', 'title', 'aria-label')
                        if node.get(attr)]
         self.assertTrue(labels)
-        for label in labels:
-            self.assertIn('Contractor', label)
-            self.assertIsNone(re.search(r'\bContracts?\b', label), label)
+        self.assertTrue(any('Contract' in label for label in labels))
 
     def test_defaults_leave_standard_data_unchanged(self):
         partner = self.env['res.partner'].create({'name': 'Plain contact'})

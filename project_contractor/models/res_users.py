@@ -18,4 +18,5 @@ class ResUsers(models.Model):
         self.partner_id.sudo().write({'is_contractor': True})
         group = self.env.ref('project_contractor.group_contractor')
         self.sudo().write({'is_contractor_user': True, 'group_ids': [Command.set(group.ids)]})
+        self.env.registry.clear_cache()
         return True
