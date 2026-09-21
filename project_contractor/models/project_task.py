@@ -1,7 +1,7 @@
 # Part of project_contractor. See LICENSE file for full copyright and licensing details.
 
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.fields import Domain
 
 
@@ -63,11 +63,15 @@ class ProjectTask(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        if self.env.user.is_contractor_user:
+            raise AccessError(_("Contractors cannot create tasks at this access-foundation stage."))
         tasks = super().create(vals_list)
         tasks._contractor_invalidate_derived_values(tasks.mapped('contractor_id'), tasks.mapped('project_id'))
         return tasks
 
     def write(self, vals):
+        if self.env.user.is_contractor_user and {'contractor_id', 'user_ids', 'project_id'} & vals.keys():
+            raise AccessError(_("Contractors cannot change Project task assignments."))
         contractors = self.mapped('contractor_id')
         projects = self.mapped('project_id')
         result = super().write(vals)
@@ -78,6 +82,8 @@ class ProjectTask(models.Model):
         return result
 
     def unlink(self):
+        if self.env.user.is_contractor_user:
+            raise AccessError(_("Contractors cannot delete tasks at this access-foundation stage."))
         contractors = self.mapped('contractor_id')
         projects = self.mapped('project_id')
         result = super().unlink()

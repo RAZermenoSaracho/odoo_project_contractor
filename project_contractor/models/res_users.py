@@ -9,7 +9,11 @@ class ResUsers(models.Model):
 
     def action_become_contractor(self):
         self.ensure_one()
-        if self != self.env.user or not self.share:
+        if self != self.env.user:
+            raise AccessError(_("Only your portal account can become a Contractor."))
+        if self.is_contractor_user:
+            return True
+        if not self.share:
             raise AccessError(_("Only your portal account can become a Contractor."))
         self.partner_id.sudo().write({'is_contractor': True})
         group = self.env.ref('project_contractor.group_contractor')

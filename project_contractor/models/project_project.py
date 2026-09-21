@@ -1,6 +1,7 @@
 # Part of project_contractor. See LICENSE file for full copyright and licensing details.
 
 from odoo import _, api, fields, models
+from odoo.exceptions import AccessError
 from odoo.fields import Domain
 
 
@@ -24,6 +25,13 @@ class ProjectProject(models.Model):
     contractor_count = fields.Integer(
         string="Contractors Count", compute='_compute_contractor_ids',
         groups='project.group_project_user', export_string_translation=False)
+
+    def write(self, vals):
+        if self.env.user.is_contractor_user and {
+            'partner_id', 'user_id', 'active', 'privacy_visibility', 'stage_id',
+        } & vals.keys():
+            raise AccessError(_("Contractors cannot change a Project's customer, assignment, visibility, or closure."))
+        return super().write(vals)
 
     @api.depends_context('uid', 'allowed_company_ids')
     def _compute_contractor_ids(self):

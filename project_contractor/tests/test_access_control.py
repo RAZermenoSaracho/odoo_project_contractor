@@ -1,97 +1,153 @@
 from odoo import Command
 from odoo.exceptions import AccessError
-from odoo.tests import HttpCase, new_test_user, tagged
-from odoo.tests.common import JsonRpcException
-from odoo.tools import mute_logger
+from odoo.tests import new_test_user, tagged
 
 from .common import ProjectContractorCommon
 
 
 @tagged('post_install', '-at_install')
-class TestAccessControl(ProjectContractorCommon):
+class TestContractorAccessControl(ProjectContractorCommon):
 
-    def _create_shared_project(self, partner):
-        project = self.env['project.project'].with_context(mail_create_nolog=True).create({
-            'name': 'Shared Project',
-            'privacy_visibility': 'portal',
-            'collaborator_ids': [Command.create({'partner_id': partner.id})],
-        })
-        project.message_subscribe(partner_ids=partner.ids)
-        return project
+    def _activate_contractor(self):
+        user = new_test_user(self.env, login='pc_contractor', groups='base.group_portal')
+        partner_id = user.partner_id.id
+        user.with_user(user).action_become_contractor()
+        return user, partner_id
 
-    def test_read_only_user_cannot_change_contractor(self):
-        task = self.create_task('Read-only task', self.project_p, contractor_id=self.jane.id)
-        self.assertEqual(task.with_user(self.internal_user).read(['name'])[0]['name'], 'Read-only task')
+    def _create_scoped_projects(self, contractor):
+        Project = self.env['project.project'].with_context(mail_create_nolog=True)
+        open_project = Project.create({'name': 'Open Project', 'privacy_visibility': 'employees'})
+        own_project = Project.create({'name': 'Own Project', 'privacy_visibility': 'employees'})
+        other_project = Project.create({'name': 'Other Project', 'privacy_visibility': 'employees'})
+        open_task = self.create_task('Open Task', open_project, user_ids=[Command.clear()])
+        own_task = self.create_task(
+            'Own Task', own_project, contractor_id=contractor.partner_id.id, user_ids=[Command.clear()])
+        other_task = self.create_task('Other Task', other_project, user_ids=[Command.link(self.project_user.id)])
+        return open_project, own_project, other_project, open_task, own_task, other_task
+
+    def test_activation_is_identity_preserving_and_idempotent(self):
+        user = new_test_user(self.env, login='pc_activation', groups='base.group_portal')
+        user_count = self.env['res.users'].with_context(active_test=False).search_count([])
+        partner_count = self.env['res.partner'].with_context(active_test=False).search_count([])
+        partner_id = user.partner_id.id
+
+        user.with_user(user).action_become_contractor()
+        self.assertEqual(user.partner_id.id, partner_id)
+        self.assertTrue(user.is_contractor_user)
+        self.assertFalse(user.share)
+        self.assertTrue(user.has_group('project_contractor.group_contractor'))
+        self.assertTrue(user.has_group('base.group_user'))
+        self.assertFalse(user.has_group('project.group_project_user'))
+        self.assertFalse(user.has_group('project.group_project_manager'))
+        self.assertEqual(user.group_ids, self.env.ref('project_contractor.group_contractor'))
+        self.assertEqual(self.env['res.users'].with_context(active_test=False).search_count([]), user_count)
+        self.assertEqual(self.env['res.partner'].with_context(active_test=False).search_count([]), partner_count)
+
+        user.with_user(user).action_become_contractor()
+        self.assertEqual(user.partner_id.id, partner_id)
+        self.assertEqual(self.env['res.users'].with_context(active_test=False).search_count([]), user_count)
+        self.assertEqual(self.env['res.partner'].with_context(active_test=False).search_count([]), partner_count)
+
+    def test_activation_cannot_target_another_user(self):
+        contractor, _partner_id = self._activate_contractor()
+        other_portal = new_test_user(self.env, login='pc_other_portal', groups='base.group_portal')
         with self.assertRaises(AccessError):
-            task.with_user(self.internal_user).write({'contractor_id': self.acme.id})
+            other_portal.with_user(contractor).action_become_contractor()
+        self.assertTrue(other_portal.share)
+        self.assertFalse(other_portal.is_contractor_user)
 
-    def test_no_new_security_objects(self):
-        count = self.env['ir.model.data'].search_count([
-            ('module', '=', 'project_contractor'),
-            ('model', 'in', ('res.groups', 'res.groups.privilege', 'ir.model.access', 'ir.rule')),
-        ])
-        self.assertEqual(count, 0)
+    def test_contractor_effective_project_and_task_permissions(self):
+        contractor, _partner_id = self._activate_contractor()
+        open_project, own_project, other_project, open_task, own_task, other_task = self._create_scoped_projects(contractor)
+        Project = self.env['project.project'].with_user(contractor)
+        Task = self.env['project.task'].with_user(contractor)
 
-    def test_classification_and_assignment_grant_nothing(self):
-        partner = self.env['res.partner'].create({'name': 'No Access Contractor', 'email': 'no-access@example.com'})
-        users_before = self.env['res.users'].with_context(active_test=False).search_count([])
-        partner.is_contractor = True
-        task = self.create_task('Task', self.project_p, contractor_id=partner.id)
-        self.flush_tracking()
-        self.assertEqual(self.env['res.users'].with_context(active_test=False).search_count([]), users_before)
-        self.assertNotIn(partner, task.message_partner_ids)
-        self.assertNotIn(partner, self.project_p.message_partner_ids)
-        self.assertNotIn(partner, self.project_p.collaborator_ids.partner_id)
-        self.assertFalse(self.env['mail.notification'].search_count([('res_partner_id', '=', partner.id)]))
-
-    def test_portal_user_assigned_as_contractor_gains_no_access(self):
-        task = self.create_task('Internal task', self.project_p, contractor_id=self.portal_partner.id)
+        visible_projects = Project.search([('id', 'in', (open_project | own_project | other_project).ids)])
+        self.assertEqual(visible_projects, open_project | own_project)
+        visible_tasks = Task.search([('id', 'in', (open_task | own_task | other_task).ids)])
+        self.assertEqual(visible_tasks, open_task | own_task)
         with self.assertRaises(AccessError):
-            task.with_user(self.portal_user).check_access('read')
+            other_project.with_user(contractor).read(['name'])
         with self.assertRaises(AccessError):
-            self.project_p.with_user(self.portal_user).check_access('read')
-        self.assertNotIn(self.portal_partner, self.project_p.collaborator_ids.partner_id)
+            other_task.with_user(contractor).read(['name'])
 
-    def test_project_sharing_collaborator_cannot_read_contractor(self):
-        project = self._create_shared_project(self.portal_partner)
-        task = self.create_task('Shared task', project, contractor_id=self.jane.id)
-        portal_task = task.with_user(self.portal_user)
-        self.assertEqual(portal_task.read(['name'])[0]['name'], 'Shared task')
+        open_project.with_user(contractor).write({'name': 'Renamed Open Project'})
+        own_task.with_user(contractor).write({'name': 'Renamed Own Task'})
         with self.assertRaises(AccessError):
-            portal_task.read(['contractor_id'])
+            Project.create({'name': 'Contractor Project'})
         with self.assertRaises(AccessError):
-            project.with_user(self.portal_user).read(['contractor_ids'])
+            open_project.with_user(contractor).unlink()
+        with self.assertRaises(AccessError):
+            Task.create({'name': 'Contractor Task', 'project_id': open_project.id})
+        with self.assertRaises(AccessError):
+            own_task.with_user(contractor).unlink()
 
-    def test_other_company_work_not_counted(self):
-        self.create_task('Company A work', self.project_p, contractor_id=self.jane.id)
-        self.create_task('Company B work', self.project_b, contractor_id=self.jane.id)
-        jane = self.jane.with_user(self.project_user)
-        self.assertEqual(jane.with_context(allowed_company_ids=self.company_a.ids).contractor_task_count, 1)
+    def test_contractor_cannot_change_customer_or_assignment_relationships(self):
+        contractor, _partner_id = self._activate_contractor()
+        open_project, own_project, _other_project, _open_task, own_task, _other_task = self._create_scoped_projects(contractor)
+        with self.assertRaises(AccessError):
+            open_project.with_user(contractor).write({'partner_id': self.client.id})
+        with self.assertRaises(AccessError):
+            own_project.with_user(contractor).write({'user_id': self.project_user.id})
+        with self.assertRaises(AccessError):
+            own_task.with_user(contractor).write({'contractor_id': False})
+        with self.assertRaises(AccessError):
+            own_task.with_user(contractor).write({'user_ids': [Command.link(self.project_user.id)]})
+        with self.assertRaises(AccessError):
+            own_task.with_user(contractor).write({'project_id': open_project.id})
+
+    def test_contractor_can_only_access_and_edit_own_partner(self):
+        contractor, partner_id = self._activate_contractor()
+        own_partner = self.env['res.partner'].with_user(contractor).browse(partner_id)
+        own_partner.write({'phone': '555-0100'})
+        self.assertEqual(own_partner.phone, '555-0100')
+        foreign_partner = self.jane.with_user(contractor)
+        with self.assertRaises(AccessError):
+            foreign_partner.read(['name'])
+        with self.assertRaises(AccessError):
+            foreign_partner.write({'name': 'Denied'})
+        with self.assertRaises(AccessError):
+            self.env['res.partner'].with_user(contractor).create({'name': 'Denied contact'})
+        with self.assertRaises(AccessError):
+            own_partner.unlink()
+
+    def test_non_contractors_keep_their_existing_access(self):
+        self._activate_contractor()
         self.assertEqual(
-            jane.with_context(allowed_company_ids=(self.company_a | self.company_b).ids).contractor_task_count, 2)
+            self.project_p.with_user(self.project_user).read(['name'])[0]['name'], 'Contractor Project P')
+        self.jane.with_user(self.project_user).write({'phone': '555-0200'})
+        self.assertEqual(self.jane.phone, '555-0200')
+        self.project_p.with_user(self.env.ref('base.user_admin')).write({'name': 'Admin project write'})
+        self.assertEqual(self.project_p.name, 'Admin project write')
+        self.jane.with_user(self.env.ref('base.user_admin')).write({'phone': '555-0300'})
+        self.assertEqual(self.jane.phone, '555-0300')
 
-
-@tagged('post_install', '-at_install')
-class TestContractorPortalRpc(HttpCase):
-
-    def test_portal_rpc_cannot_read_contractor(self):
-        portal_user = new_test_user(self.env, login='pc_rpc_portal', groups='base.group_portal')
-        contractor = self.env['res.partner'].create({'name': 'RPC Contractor', 'is_contractor': True})
+    def test_non_contractor_portal_rules_remain_unaffected(self):
         project = self.env['project.project'].with_context(mail_create_nolog=True).create({
-            'name': 'RPC Shared Project',
+            'name': 'Portal Project',
             'privacy_visibility': 'portal',
-            'collaborator_ids': [Command.create({'partner_id': portal_user.partner_id.id})],
+            'collaborator_ids': [Command.create({'partner_id': self.portal_partner.id})],
         })
-        project.message_subscribe(partner_ids=portal_user.partner_id.ids)
-        task = self.env['project.task'].create({
-            'name': 'RPC Task', 'project_id': project.id, 'contractor_id': contractor.id,
-        })
+        project.message_subscribe(partner_ids=self.portal_partner.ids)
+        task = self.create_task('Portal Task', project)
+        self.assertEqual(project.with_user(self.portal_user).read(['name'])[0]['name'], 'Portal Project')
+        self.assertEqual(task.with_user(self.portal_user).read(['name'])[0]['name'], 'Portal Task')
 
-        def read_params(fields):
-            return {'model': 'project.task', 'method': 'read', 'args': [[task.id], fields], 'kwargs': {}}
-
-        self.authenticate('pc_rpc_portal', 'pc_rpc_portal')
-        result = self.make_jsonrpc_request('/web/dataset/call_kw/project.task/read', read_params(['name']))
-        self.assertEqual(result[0]['name'], 'RPC Task')
-        with mute_logger('odoo.http'), self.assertRaises(JsonRpcException):
-            self.make_jsonrpc_request('/web/dataset/call_kw/project.task/read', read_params(['contractor_id']))
+    def test_additive_acls_do_not_restore_create_or_delete(self):
+        contractor, _partner_id = self._activate_contractor()
+        Project = self.env['project.project'].with_user(contractor)
+        Task = self.env['project.task'].with_user(contractor)
+        self.assertTrue(Project.has_access('read'))
+        self.assertTrue(Project.has_access('write'))
+        self.assertFalse(Project.has_access('create'))
+        self.assertFalse(Project.has_access('unlink'))
+        self.assertTrue(Task.has_access('read'))
+        self.assertTrue(Task.has_access('write'))
+        # base.group_user grants a task-create ACL, so the narrow model guard
+        # must close that additive permission until the lifecycle phase.
+        self.assertTrue(Task.has_access('create'))
+        with self.assertRaises(AccessError):
+            Task.create({'name': 'Bypass attempt'})
+        self.assertTrue(Task.has_access('unlink'))
+        with self.assertRaises(AccessError):
+            Task.unlink()
