@@ -61,6 +61,29 @@ class TestPortalWorkflow(ProjectContractorCommon):
         proposal_b.with_user(contractor_b).action_submit()
         self.assertFalse(self.env['contract.proposal'].with_user(contractor_a).search([('id', '=', proposal_b.id)]))
 
+    def test_award_preserves_only_winner_contract_access_and_routes(self):
+        winner = self._contractor('pc_award_winner')
+        competitor = self._contractor('pc_award_competitor')
+        unrelated = self._contractor('pc_award_unrelated')
+        contract = self.env['contract.contract'].with_user(self.customer).create({
+            'name': 'Awarded Contract', 'partner_id': self.customer_company.id,
+        })
+        contract.with_user(self.customer).action_publish()
+        self.assertTrue(self.env['contract.contract'].with_user(winner).search([('id', '=', contract.id)]))
+        winner_proposal = self.env['contract.proposal'].with_user(winner).create({'contract_id': contract.id, 'amount': 10})
+        competitor_proposal = self.env['contract.proposal'].with_user(competitor).create({'contract_id': contract.id, 'amount': 20})
+        winner_proposal.with_user(winner).action_submit()
+        competitor_proposal.with_user(competitor).action_submit()
+        project = winner_proposal.with_user(self.customer).action_accept()
+        self.assertEqual(contract.state, 'awarded')
+        self.assertTrue(self.env['contract.contract'].with_user(winner).search([('id', '=', contract.id)]))
+        self.assertFalse(self.env['contract.contract'].with_user(competitor).search([('id', '=', contract.id)]))
+        self.assertFalse(self.env['contract.contract'].with_user(unrelated).search([('id', '=', contract.id)]))
+        self.assertTrue(winner_proposal.with_user(winner).exists())
+        self.assertTrue(project.with_user(winner).exists())
+        self.assertEqual(project.with_user(winner).contract_id, contract.with_user(winner))
+        self.assertTrue(self.env['contract.contract'].with_user(self.customer_sibling).search([('id', '=', contract.id)]))
+
     def test_customer_contract_pages_use_minimal_contractor_identity_projection(self):
         contractor = self._contractor('pc_portal_independent_identity')
         contractor.partner_id.write({'name': 'Independent Contractor', 'email': 'private@example.test'})
@@ -119,3 +142,6 @@ class TestPortalIdentityRenderingHttp(HttpCase):
             self.assertNotIn(b'private@example.test', response.content)
         self.authenticate(self.other_customer.login, self.other_customer.login)
         self.assertEqual(self.url_open(f'/my/contracts/{self.contract.id}').status_code, 404)
+        self.authenticate(self.contractor.login, self.contractor.login)
+        self.assertEqual(self.url_open(f'/my/contractor/proposals/{self.proposal.id}').status_code, 200)
+        self.assertEqual(self.url_open(f'/my/contractor/projects/{self.project.id}').status_code, 200)
